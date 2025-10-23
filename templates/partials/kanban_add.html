@@ -1,0 +1,48 @@
+<div id="add" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="standard-modalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title" id="standard-modalLabel">Nueva Tarea</h4>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-hidden="true"></button>
+      </div>
+      <form id="frmAdd" method="post" action="{% url 'add_tarea' %}">
+        {% csrf_token %}
+        <div class="modal-body">
+          <div class="row">
+            <div class="col-sm-6 mb-3">
+              <label for="ot" class="form-label">OT</label>
+              {{form.ot}}
+            </div>
+            <div class="col-sm-6 mb-3">
+              <label for="titulo" class="form-label">Título</label>
+              {{form.titulo}}
+            </div>
+          </div>
+          <div class="mb-3">
+            <label for="addDescripcion" class="form-label">Descripción</label>
+            {{form.descripcion}}
+          </div>
+          <div class="row">
+            <div class="col-sm-6 mb-3">
+              <label for="user" class="form-label">Responsable</label>
+              {{form.user}}
+            </div>
+            <div class="col-sm-3 mb-3">
+              <label for="vencimiento" class="form-label">Vencimiento</label>
+              {{form.vencimiento}}
+            </div>
+            <div class="col-sm-3 mb-3">
+              <label for="duracion" class="form-label">Tiempo estimado</label>
+              {{form.duracion}}
+            </div>
+          </div>
+          <!-- Campo de Descripción -->
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cerrar</button>
+          <button type="submit" class="btn btn-primary">Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

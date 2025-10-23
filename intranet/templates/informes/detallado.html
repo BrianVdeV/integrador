@@ -1,0 +1,349 @@
+{% extends 'base.html' %} {% load static %} {% block title %}Detallado{% endblock title %} {% block vendor_js %}
+<!-- Daterangepicker js -->
+<script src="{% static 'vendor/daterangepicker/moment.min.js' %}"></script>
+<script src="{% static 'vendor/daterangepicker/daterangepicker.js' %}"></script>
+{% endblock %} {% block content %}
+<!-- start page title -->
+<div class="row">
+  <div class="col-12">
+    <div class="page-title-box">
+      <div class="page-title-right">
+        <form class="d-flex">
+          <div class="input-group">
+            <input class="form-control form-control-light" type="text" id="daterange_textbox" />
+            <span class="input-group-text bg-primary border-primary text-white">
+              <i class="mdi mdi-calendar-range font-13"></i>
+            </span>
+          </div>
+        </form>
+      </div>
+      <h4 class="page-title">Detallado</h4>
+    </div>
+  </div>
+</div>
+<!-- end page title -->
+<div class="row">
+  <div class="col-md-12">
+    <div class="card">
+      <div class="card-body">
+        <table class="table table-sm table-hover w-100" id="table">
+          <thead>
+            <tr>
+              <th>Entrada de Tiempo</th>
+              <th>OT</th>
+              <th>Titulo</th>
+              <th>Reing.</th>
+              <th>Ven.</th>
+              <th>Resp.</th>
+              <th>Tiempo</th>
+              <th>Total</th>
+              {% if user.is_superuser %}
+              <th></th>
+              {% endif %}
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% include 'partials/_modals/modal_delete_actividad.html' %} {% include 'partials/_modals/modal_edit_actividad.html' %} {% endblock %} {% block scripts %}
+<script>
+  $(document).ready(function () {
+    fetch_data();
+    // Define un objeto que asigna colores a cada palabra
+    function fetch_data(start_date = "", end_date = "") {
+      $("#table").DataTable({
+        language: {
+          url: "https://cdn.datatables.net/plug-ins/2.2.1/i18n/es-MX.json",
+        },
+        pageLength: 50,
+        order: [],
+        processing: true,
+        serverSide: true,
+        ordering: false,
+        rowId: "id",
+        ajax: {
+          url: "{% url 'informes-detallado' %}",
+          data: {
+            start_date: start_date,
+            end_date: end_date,
+          },
+        },
+        columns: [
+          {
+            data: null,
+            render: function (data) {
+              var tarea = data && data.tarea ? data.tarea : "";
+              var descripcion = data && data.comentario ? data.comentario : "";
+
+              return (
+                "<div class='truncate-cell';><strong>" +
+                tarea +
+                "</strong>" +
+                " " +
+                descripcion +
+                " </div>"
+              );
+            },
+          },
+          {
+            data: null,
+            render: function (data) {
+              if (data.expedientes.length==0) {
+                return (
+                  "<div class='truncate-cell'>" +
+                  data.ot +
+                  "</div>"
+                );
+              }
+              var color = colorMapping[data.expedientes[0].estado] || "black";
+              return (
+                "<div class='truncate-cell-single'>" +
+                data.ot +
+                "</div>" +
+                "<span class='badge' style='background-color:" +
+                color +
+                "'>" +
+                data.expedientes[0].estado +
+                "</span>"
+              );
+            },
+          },
+          {
+            data: null,
+            render: function (data) {
+              if(data.expedientes.length==0){
+                return("")
+              }else{
+                var titulo = data.expedientes[0].titulo;
+                return (titulo);
+              }
+            },
+          },
+          {
+              data: "expedientes",
+              render: function (data, type, row) {
+                  if (Array.isArray(data) && data.length > 0) {
+                      return data[0].reingreso || '';
+                  }
+                  return '';
+              }
+          },
+          {
+              data: "expedientes",
+              render: function (data, type, row) {
+                  if (Array.isArray(data) && data.length > 0) {
+                      return data[0].vencimiento || '';
+                  }
+                  return '';
+              }
+          },
+          { data: "user" },
+          {
+            data: null,
+            render: function (data, type, row) {
+              return (
+                '<div class="row"><div class="col-12 text-nowrap">' +
+                data.inicio +
+                " - " +
+                data.fin +
+                " </div></div>" +
+                '<div class="row"><div class="col-12">' +
+                data.fecha +
+                "</div></div>"
+              );
+            },
+          },
+          { data: "total" },
+          {% if user.is_superuser%}{ data: null},{% endif %}
+        ],
+        {% if user.is_superuser%}
+        dom: "<'row'<'col-md-6'B><'col-md-6'f>>" +
+          "<'row'<'col-12'tr>>" +
+          "<'row'<'col-md-5'i><'col-md-7'p>>",
+        buttons: [
+            {
+                text: 'Exportar a Excel',
+                className: "btn-success",
+                action: function () {
+                    // Captura el valor del filtro de búsqueda
+                    const searchValue = $('.form-control-sm').val();
+
+                    // Construye los parámetros de la solicitud
+                    let params = $.param({
+                        start_date: start_date,
+                        end_date: end_date,
+                        search_value: searchValue // Incluye el término de búsqueda
+                    });
+
+                    // Redirige a la ruta de exportación con los parámetros
+                    window.location.href = "{% url 'exportar_actividades_excel' %}?" + params;
+                }
+            }
+        ],
+        {% endif %}
+        columnDefs: [
+          {
+            targets: -1,{% if user.is_superuser %}
+            data: null,
+            defaultContent:
+              '<div class="dropdown card-widgets">' +
+              '<a href="#" class="dropdown-toggle arrow-none" data-bs-toggle="dropdown" aria-expanded="false"><i class="uil uil-ellipsis-h"></i></a>' +
+              '<div class="dropdown-menu dropdown-menu-end">' +
+              '<a href="javascript:void(0);" class="dropdown-item edit"><i class="uil uil-edit me-1"></i>Editar</a>' +
+              '<a href="javascript:void(0);" class="dropdown-item text-danger delete"><i class="uil uil-trash-alt me-1"></i>Eliminar</a>' +
+              "</div>" +
+              "</div>",
+          },
+          {
+            targets: -2,{% endif %}
+            className: "fw-bold",
+          }
+        ],
+        drawCallback: function () {
+          $(".dataTables_paginate > .pagination").addClass(
+            "pagination-rounded"
+          );
+        },
+      });
+    }
+    $("#daterange_textbox").daterangepicker(
+      {
+        ranges: {
+          Hoy: [moment(), moment()],
+          Ayer: [moment().subtract(1, "days"), moment().subtract(1, "days")],
+          "Esta semana": [moment().startOf("week"), moment().endOf("week")],
+          "La semana pasada": [
+            moment().subtract(1, "week").startOf("week"),
+            moment().subtract(1, "week").endOf("week").subtract(0, "days"),
+          ],
+          "Este mes": [moment().startOf("month"), moment().endOf("month")],
+          "El mes pasado": [
+            moment().subtract(1, "month").startOf("month"),
+            moment().subtract(1, "month").endOf("month"),
+          ],
+          "Este año": [moment().startOf("year"), moment().endOf("year")],
+        },
+        locale: {
+          format: "DD/MM/YYYY",
+          separator: " - ",
+          applyLabel: "Apply",
+          cancelLabel: "Cancel",
+          fromLabel: "From",
+          toLabel: "To",
+          customRangeLabel: "Custom",
+          weekLabel: "W",
+          daysOfWeek: ["Do", "Lu", "Ma", "Mi", "Ju", "Vi", "Sa"],
+          monthNames: [
+            "Enero",
+            "Febrero",
+            "Marzo",
+            "Abril",
+            "Mayo",
+            "Junio",
+            "Julio",
+            "Agosto",
+            "Septiembre",
+            "Octubre",
+            "Noviembre",
+            "Diciembre",
+          ],
+          firstDay: 0,
+        },
+        alwaysShowCalendars: true,
+        showCustomRangeLabel: false,
+        opens: "left",
+        autoApply: true,
+        format: "YYYY-MM-DD",
+      },
+      function (start, end) {
+        $("#table").DataTable().destroy();
+        fetch_data(start.format("YYYY-MM-DD"), end.format("YYYY-MM-DD"));
+      }
+    );
+  });
+
+  let currentTaskId = null;
+
+  $(document).on("click", ".edit", function () {
+    currentTaskId = $(this).closest("tr").attr("id");
+    $("#frmEdit").attr("data-task-id", currentTaskId);
+    $.get(`../api/actividades/${currentTaskId}/`, function (data) {
+      cargarTareas2(data.ot, data.tarea);
+      $('select[name="ot"]').val(data.ot);
+      $('select[name="tarea"]').val(data.tarea);
+      $('textarea[name="comentario"]').val(data.comentario);
+      $('select[name="user"]').val(data.user);
+      let fecha = moment(data.inicio).format("YYYY-MM-DDTHH:mm");
+      let fechaFin = moment(data.fin).format("YYYY-MM-DDTHH:mm");
+      $('input[name="inicio"]').val(fecha);
+      $('input[name="fin"]').val(fechaFin);
+    });
+    $("#mdlEdit").modal("show");
+  });
+
+  function cargarTareas2(otId, selectedTareaId = null) {
+    $.ajax({
+      url: "../api/tarea/?ot=" + otId,
+      data: { ot: otId },
+      success: function (data) {
+        let tareaSelect = $('select[name="tarea"]');
+        tareaSelect.empty();
+        tareaSelect.append('<option value="">---------</option>');
+
+        (data.results || data).forEach(function (tarea) {
+          let selected = selectedTareaId && tarea.id === selectedTareaId ? "selected" : "";
+          tareaSelect.append(`<option value="${tarea.id}" ${selected}>${tarea.titulo}</option>`);
+        });
+      },
+    });
+  }
+
+  $(document).on("submit", "#frmEdit", function (e) {
+    e.preventDefault();
+
+    $.ajax({
+      url: `../api/actividades/${currentTaskId}/`,
+      method: "PATCH",
+      headers: {
+        "X-CSRFToken": "{{ csrf_token }}",
+      },
+      data: $(this).serialize(),
+      success: function (res) {
+        $("#mdlEdit").modal("hide");
+        $("#table").DataTable().ajax.reload(null, false);
+        $.NotificationApp.send("¡Bien hecho!", "Actividad actualizada con éxito", "bottom-right", "rgba(0,0,0,0.2)", "success");
+      },
+      error: function (xhr) {
+        $.NotificationApp.send("¡Error!", "Error", "bottom-right", "rgba(0,0,0,0.2)", "error");
+      },
+    });
+  });
+
+  $(document).on("click", ".delete", function () {
+    fila = $(this).closest("tr").attr("id");
+    $("#mdlDelete").modal("show");
+  });
+
+  $(document).on("click", ".btnBorrar", function () {
+    $.ajax({
+      type: "DELETE",
+      url: `../api/actividades/${fila}/`,
+      contentType: "application/json",
+      headers: {
+        "X-CSRFToken": "{{ csrf_token }}",
+      },
+      success: function (data) {
+        $("#mdlDelete").modal("hide");
+        $("tr[id='" + fila + "']").remove();
+        $.NotificationApp.send("¡Bien hecho!", "Actividad eliminada con éxito", "bottom-right", "rgba(0,0,0,0.2)", "success");
+      },
+      error: function (xhr, status, error) {
+        $.NotificationApp.send("Error al eliminar la actividad", "", "bottom-right", "rgba(0,0,0,0.2)", "danger");
+      },
+    });
+  });
+</script>
+{% endblock %}

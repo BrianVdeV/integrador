@@ -1,0 +1,42 @@
+{% extends 'base.html' %} {% block content %}
+<!-- start page title -->
+<div class="row">
+    <div class="col-12">
+      <div class="page-title-box">
+        <h4 class="page-title">{{title}}</h4>
+      </div>
+    </div>
+  </div>
+  <!-- end page title -->
+<div class="row">
+    <div class="col-sm-12">
+        <!-- Profile -->
+        <div class="card bg-primary">
+            <div class="card-body profile-user-box">
+                <div class="row">
+                    <div class="col-sm-8">
+                        <div class="row align-items-center">
+                            <div class="col">
+                                <div>
+                                    <h4 class="mt-1 mb-1 text-white">{{usuario}} {{usuario.last_name}}</h4>
+                                    <p class="font-13 text-white-50"></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div> <!-- end col-->
+
+                    <div class="col-sm-4">
+                        <div class="text-center mt-sm-0 mt-3 text-sm-end">
+                            <a type="button" class="btn btn-light" href="{% url 'cambiar_contrasena' %}">
+                                <i class="mdi mdi-account-edit me-1"></i> Cambiar Contraseña
+                            </a>
+                        </div>
+                    </div> <!-- end col-->
+                </div> <!-- end row -->
+
+            </div> <!-- end card-body/ profile-user-box-->
+        </div><!--end profile/ card -->
+    </div> <!-- end col-->
+</div>
+{% endblock %} {% block scripts %}
+{% endblock %}

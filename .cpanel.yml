@@ -1,0 +1,8 @@
+---
+deployment:
+  tasks:
+    - source /home/qoo0zjim643z/virtualenv/repositories/intranet/3.11/bin/activate
+    - pip install -r requirements.txt
+    - python manage.py migrate
+    - python manage.py collectstatic --noinput
+    - touch tmp/restart.txt

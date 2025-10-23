@@ -1,0 +1,98 @@
+{% extends 'base.html' %} {% block content %}
+{% load static %}
+<!-- start page title -->
+<div class="row">
+  <div class="col-12">
+    <div class="page-title-box">
+      <h4 class="page-title">Equipo</h4>
+    </div>
+  </div>
+</div>
+<!-- end page title -->
+<div class="row">
+  <div class="col-md-12">
+    <div class="card">
+      <div class="card-body">
+        <ul class="nav nav-tabs nav-bordered mb-3">
+          <li class="nav-item">
+            <a
+              href="#miembros"
+              data-bs-toggle="tab"
+              aria-expanded="false"
+              class="nav-link active"
+            >
+              <i class="mdi mdi-home-variant d-md-none d-block"></i>
+              <span class="d-none d-md-block">Miembros</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a
+              href="#grupos"
+              data-bs-toggle="tab"
+              aria-expanded="true"
+              class="nav-link"
+            >
+              <i class="mdi mdi-account-circle d-md-none d-block"></i>
+              <span class="d-none d-md-block">Area</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a
+              href="#organigrama"
+              data-bs-toggle="tab"
+              aria-expanded="false"
+              class="nav-link"
+            >
+              <i class="mdi mdi-settings-outline d-md-none d-block"></i>
+              <span class="d-none d-md-block">Organigrama</span>
+            </a>
+          </li>
+        </ul>
+        <div class="tab-content">
+          <div class="tab-pane show active" id="miembros">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Usuario</th>
+                  <th>Nombres</th>
+                  <th>Apellidos</th>
+                </tr>
+              </thead>
+              <tbody>
+                {%for colaborador in colaboradores%}
+                <tr>
+                  <td>{{ colaborador.username }}</td>
+                  <td>{{ colaborador.first_name }}</td>
+                  <td>{{ colaborador.last_name }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          <div class="tab-pane " id="grupos">
+            <p>...</p>
+          </div>
+          <div class="tab-pane" id="organigrama">
+            <img src="{% static 'images/equipo/organigrama.jpg' %}" alt="Organigrama" class="img-fluid">
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %} {% block scripts %}
+<script>
+  $(document).ready(function () {
+    $("#table").DataTable({
+      language: {
+        url: "https://cdn.datatables.net/plug-ins/2.2.1/i18n/es-MX.json",
+      },
+      pageLength: 25,
+      order: [],
+      drawCallback: function () {
+        $(".dataTables_paginate > .pagination").addClass("pagination-rounded");
+      },
+    });
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,462 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}{{ot}}{% endblock title %}
+{% block vendor_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+<link href="{% static 'vendor/quill/quill.core.css' %}" rel="stylesheet" type="text/css" />
+<link href="{% static 'vendor/quill/quill.snow.css' %}" rel="stylesheet" type="text/css" />
+{% endblock vendor_css %}
+
+{% block vendor_js %}
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script src="{% static 'vendor/quill/quill.min.js' %}"></script>
+{% endblock vendor_js %}
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <div class="page-title-right">
+                <form class="d-flex">
+                    <button class="btn btn-primary ms-1" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <i class="mdi mdi-dots-vertical"></i>
+                    </button>
+                    <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                        <a class="dropdown-item" href="javascript: void(0);" data-bs-toggle="modal" data-bs-target="#mdlDelete">Eliminar</a>
+                    </div>
+                </form>
+            </div>
+            <h4 class="page-title">{{ot}}</h4>
+        </div>
+    </div>
+</div>
+<div class="row">
+  <div class="col">
+    <div class="card">
+      <div class="card-body">
+      <ul class="nav nav-tabs nav-bordered mb-3">
+        <li class="nav-item">
+            <a href="#estado" data-bs-toggle="tab" aria-expanded="false" class="nav-link active">
+                <i class="mdi mdi-home-variant d-md-none d-block"></i>
+                <span class="d-none d-md-block">Estado</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a href="#configuracion" data-bs-toggle="tab" aria-expanded="true" class="nav-link">
+                <i class="mdi mdi-account-circle d-md-none d-block"></i>
+                <span class="d-none d-md-block">Configuración</span>
+            </a>
+        </li>
+      </ul>
+      <div class="tab-content">
+        <div class="tab-pane show active" id="estado">
+          <div class="row">
+            <div class="col">
+              <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#add">Agregar nueva tarea</button>
+            </div>
+          </div>
+          <br>
+          <div class="row">
+          <div class="col">
+            <table id="table" class="table dt-responsive nowrap w-100">
+              <thead>
+                  <tr>
+                      <th>Titulo</th>
+                      <th>Participantes</th>
+                      <th>Estado</th>
+                      <th>Vencimiento</th>
+                      <th>Tiempo Registrado</th>
+                      <th></th>
+                  </tr>
+              </thead>
+              <tbody>
+              </tbody>
+            </table>
+          </div>
+          </div>
+        </div>
+        <div class="tab-pane" id="configuracion">
+          <div class="row">
+            <div class="chart-content-bg">
+                <div class="row text-center">
+                    <div class="col-sm-4">
+                        <p class="text-muted mb-0 mt-3">Presupuesto Gastado</p>
+                        <h2 class="fw-normal mb-3">
+                            <small class="mdi mdi-checkbox-blank-circle text-primary align-middle me-1"></small>
+                            <span>{{total_gastos}} PEN</span>
+                        </h2>
+                    </div>
+                    <div class="col-sm-4">
+                        <p class="text-muted mb-0 mt-3">Ingresos</p>
+                        <h2 class="fw-normal mb-3">
+                            <small class="mdi mdi-checkbox-blank-circle text-success align-middle me-1"></small>
+                            <span>- PEN</span>
+                        </h2>
+                    </div>
+                    <div class="col-sm-4">
+                        <p class="text-muted mb-0 mt-3">Tiempo registrado</p>
+                        <h2 class="fw-normal mb-3">
+                            <small class="mdi mdi-checkbox-blank-circle text-danger align-middle me-1"></small>
+                            <span>{{total_horas_registradas}} horas</span>
+                        </h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+              <form method="post" action="{% url 'edit_proyecto' ot.id_ot %}" id="form-edit-proyecto">
+                {% csrf_token %}
+                <input type="hidden" name="id_ot" value="{{ot.id_ot}}">
+                <div class="mb-3">
+                  <label for="txtNombre" class="form-label">Nombre</label>
+                  <input type="text" id="txtNombre" name="txtNombre" class="form-control" value="{{ot.nombre}}">
+                </div>
+                <div class="mb-3">
+                    <label for="sltEstado" class="form-label">Estado</label>
+                    <select name="sltEstado" id="sltEstado" class="form-select">
+                        <option value="Activo" {% if ot.estado == 'Activo' %}selected{% endif %}>Activo</option>                       
+                        <option value="Finalizado" {% if ot.estado == 'Finalizado' %}selected{% endif %}>Finalizado</option>                       
+                        <option value="Detenido" {% if ot.estado == 'Detenido' %}selected{% endif %}>Detenido</option>                       
+                    </select>
+                </div>
+                <div class="mb-3">
+                  <label for="txtColor" class="form-label">Color</label>
+                  <input class="form-control" id="txtColor" type="color" name="color" value="{{ot.color}}">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Descripción</label>
+                    
+                    <input type="hidden" name="txtDescripcion" id="hiddenDescripcion">
+                    
+                    <div id="snow-editor" style="height: 300px;">
+                        {{ ot.descripcion|safe|default_if_none:"" }}
+                    </div>
+                </div>
+                <div class="mb-4">
+                  <div class="form-check form-check-inline">
+                      <input type="radio" id="chkPrivado1" name="chkPrivado" value="1" class="form-check-input" {% if ot.privado == 1 %}checked{% endif %}>
+                      <label class="form-check-label" for="chkPrivado1">Privado</label>
+                  </div>
+                  <div class="form-check form-check-inline">
+                      <input type="radio" id="chkPrivado2" name="chkPrivado" value="0" class="form-check-input" {% if ot.privado == 0 %}checked{% endif %}>
+                      <label class="form-check-label" for="chkPrivado2">Público</label>
+                  </div>
+                </div>
+                <button class="btn btn-success" type="submit">Guardar</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="row">
+  <div class="col">
+    <div class="card">
+      <div class="card-body">
+        <h5 class="card-title">Ubicación</h5>
+            <div id="map" style="height: 400px;"></div>
+      </div>
+  </div>
+</div>
+
+<div class="modal fade" id="mdlDelete" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="standard-modalLabel">Eliminar</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-hidden="true"></button>
+            </div>
+            <form id="frmDeleteTarea" method="post">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <p>¿Estás seguro de que quieres eliminar la Tarea? </p>
+                    <input type="hidden" id="id_tarea_eliminar" name="id" value="">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+                    <button class="btn btn-danger" type="submit">Eliminar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% include 'partials/kanban_add.html' %}
+{% include 'partials/_offcanvas/kanban_edit.html' %}
+{% endblock %}
+{% block scripts %}
+<script>
+    // Mapa para la visualización del estado
+    const estadoMap = {
+        todo: { text: "Por Hacer", color: "secondary" },
+        in_progress: { text: "En Progreso", color: "primary" },
+        review: { text: "En Revisión", color: "warning" },
+        done: { text: "Hecho", color: "success" },
+    };
+
+    var csrfToken = document.querySelector("[name=csrfmiddlewaretoken]").value;
+    let currentTaskId = null;
+
+    $(document).ready(function () {
+        // Inicialización de DataTables
+        var table = $('#table').DataTable({
+            language: { url: "https://cdn.datatables.net/plug-ins/2.2.1/i18n/es-MX.json" },
+            processing: true,
+            pageLength: 50,
+            order: [],
+            rowId: 'id',
+            ajax: {
+                url: '{% url "tarea-list" %}?ot={{ot.id_ot}}',
+                dataSrc: 'results'
+            },
+            columns: [
+                { data: 'titulo' },
+                { data: 'participantes' },
+                {
+                    data: "estado",
+                    render: function (data, type, row) {
+                        const estado = estadoMap[data] || estadoMap["todo"];
+                        return `
+                            <div class="dropdown">
+                                <button class="badge bg-${estado.color} border border-light border-opacity-10 dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                    ${estado.text}
+                                </button>
+                                <div class="dropdown-menu" id="drpEdit">
+                                    <a class="dropdown-item" href="javascript:void(0);" data-estado="todo"><span class="badge bg-secondary">Por Hacer</span></a>
+                                    <a class="dropdown-item" href="javascript:void(0);" data-estado="in_progress"><span class="badge bg-primary">En proceso</span></a>
+                                    <a class="dropdown-item" href="javascript:void(0);" data-estado="review"><span class="badge bg-warning">En revisión</span></a>
+                                    <a class="dropdown-item" href="javascript:void(0);" data-estado="done"><span class="badge bg-success">Hecho</span></a>
+                                </div>
+                            </div>
+                        `;
+                    },
+                },
+                { 
+                    data: 'vencimiento',
+                    render: function (data, type, row) {
+                        return data ? moment(data).format("DD/MM/YY") : "";
+                    },
+                },
+                { data: 'horas_trabajadas' },
+                { data: null },
+            ],
+            columnDefs: [
+                {
+                    targets: -1,
+                    data: null,
+                    orderable: false,
+                    searchable: false,
+                    defaultContent:
+                        '<div class="dropdown card-widgets">' +
+                        '<a href="#" class="dropdown-toggle arrow-none" data-bs-toggle="dropdown" aria-expanded="false"><i class="uil uil-ellipsis-h"></i></a>' +
+                        '<div class="dropdown-menu dropdown-menu-end">' +
+                        '<a class="dropdown-item edit" data-bs-toggle="offcanvas" href="#offcanvas" role="button" aria-controls="offcanvas"><i class="uil uil-edit me-1"></i>Editar</a>' +
+                        '<a href="javascript:void(0);" class="dropdown-item text-danger btn-delete-tarea" data-bs-toggle="modal" data-bs-target="#mdlDelete"><i class="uil uil-trash-alt me-1"></i>Eliminar</a>' +
+                        "</div>" +
+                        "</div>",
+                },
+            ],
+            drawCallback: function () {
+                $(".dataTables_paginate > .pagination").addClass("pagination-rounded");
+            },
+        });
+
+        $(document).on("submit", "#frmAdd", function (e) {
+            e.preventDefault();
+            $.ajax({
+                url: '{% url 'tarea-list' %}',
+                method: "POST",
+                headers: { "X-CSRFToken": csrfToken },
+                data: $(this).serialize() + '&ot={{ot.id_ot}}', 
+                success: function (res) {
+                    $("#table").DataTable().ajax.reload(null, false); 
+                    $("#add").modal("hide");
+                    $("#frmAdd")[0].reset();
+                    $.NotificationApp.send("¡Creado!", "Tarea creada con éxito", "bottom-right", "rgba(0,0,0,0.2)", "success");
+                },
+                error: function (xhr) {
+                    $.NotificationApp.send("¡Error!", "No se pudo crear la tarea", "bottom-right", "rgba(0,0,0,0.2)", "danger");
+                },
+            });
+        });
+
+        // --- SECCIÓN CORREGIDA ---
+        $("#table").on("click", ".edit", function () {
+            currentTaskId = $(this).closest("tr").attr("id");
+            $("#form-editar-tarea").attr("data-task-id", currentTaskId);
+
+            $.get(`../../api/tarea/${currentTaskId}/`, function (data) {
+                $('#offcanvas input[name="titulo"]').val(data.titulo);
+                $('#offcanvas textarea[name="descripcion"]').val(data.descripcion);
+                $('#offcanvas select[name="user"]').val(data.user);
+                $('#offcanvas input[id="creacion"]').val(moment(data.creado).format("YYYY-MM-DD"));
+                
+                // Intenta manejarlo como un calendario flatpickr
+                var fpVencimiento = $('#offcanvas input[name="vencimiento"]')[0]._flatpickr;
+                if (fpVencimiento) {
+                    // Si es flatpickr, usa su método setDate
+                    fpVencimiento.setDate(data.vencimiento || null);
+                } else {
+                    // Si NO es flatpickr, lo trata como un <input type="date"> normal
+                    if (data.vencimiento) {
+                        // Formatea la fecha a YYYY-MM-DD, que es lo que <input type="date"> requiere
+                        const fechaFormateada = moment(data.vencimiento).format("YYYY-MM-DD");
+                        $('#offcanvas input[name="vencimiento"]').val(fechaFormateada);
+                    } else {
+                        // Si no hay fecha, deja el campo vacío
+                        $('#offcanvas input[name="vencimiento"]').val('');
+                    }
+                }
+                
+                $('#offcanvas input[name="duracion"]').val(data.duracion || "00:00"); 
+                $('#offcanvas #tiempo-registrado-display').text(data.horas_trabajadas || '00:00');
+            });
+        });
+
+        // Eventos de cambio para actualizar la tarea al modificar los campos en el offcanvas
+        $('#offcanvas input[name="titulo"]').on("change", function () {
+            actualizarTarea({ titulo: $(this).val() });
+        });
+        $('#offcanvas textarea[name="descripcion"]').on("change", function () {
+            actualizarTarea({ descripcion: $(this).val() });
+        });
+        $('#offcanvas select[name="user"]').on("change", function () {
+            actualizarTarea({ user: $(this).val() });
+        });
+        $('#offcanvas input[name="vencimiento"]').on("change", function () {
+            actualizarTarea({ vencimiento: $(this).val() });
+        });
+        $('#offcanvas input[name="duracion"]').on("change", function () {
+            actualizarTarea({ duracion_input: $(this).val() }); 
+        });
+
+        // Función centralizada para actualizar la tarea (PATCH)
+        function actualizarTarea(data) {
+            if (!currentTaskId) return;
+            $.ajax({
+                url: `../../api/tarea/${currentTaskId}/`,
+                type: "PATCH",
+                contentType: "application/json",
+                headers: { "X-CSRFToken": csrfToken },
+                data: JSON.stringify(data),
+                success: function () {
+                    $("#table").DataTable().ajax.reload(null, false);
+                    $.NotificationApp.send("¡Actualizado!", "Cambios guardados correctamente", "bottom-right", "rgba(0,0,0,0.2)", "success");
+                },
+                error: function (xhr) {
+                    alert("Error al actualizar la tarea: " + (xhr.responseJSON?.error || xhr.statusText));
+                },
+            });
+        }
+        
+        // El resto de tus funciones...
+        $("#table").on("click", "#drpEdit .dropdown-item", function (e) {
+            e.preventDefault();
+            var id = $(this).closest("tr").attr("id");
+            var nuevoEstado = $(this).data("estado");
+            $.ajax({
+                type: "PATCH",
+                url: `../../api/tarea/${id}/`,
+                headers: { "X-CSRFToken": csrfToken },
+                contentType: "application/json",
+                dataType: "json",
+                data: JSON.stringify({ estado: nuevoEstado }),
+                success: function (data) {
+                    $("#table").DataTable().ajax.reload(null, false);
+                },
+                error: function (xhr, status, error) {
+                    $.NotificationApp.send("¡Error!", "No se pudo actualizar el estado", "bottom-right", "rgba(0,0,0,0.2)", "danger");
+                },
+            });
+        });
+        $("#table").on("click", ".btn-delete-tarea", function () {
+            var id = $(this).closest("tr").attr("id");
+            $("#id_tarea_eliminar").val(id);
+        });
+        $("#frmDeleteTarea").on("submit", function (e) {
+            e.preventDefault();
+            var id_tarea = $("#id_tarea_eliminar").val();
+            $.ajax({
+                url: `../../api/tarea/${id_tarea}/`,
+                type: "DELETE",
+                headers: { "X-CSRFToken": csrfToken },
+                success: function(response) {
+                    $("#table").DataTable().ajax.reload(null, false);
+                    $("#mdlDelete").modal("hide");
+                },
+                error: function(xhr) {
+                    $.NotificationApp.send("¡Error!", "No se pudo eliminar la tarea. " + xhr.responseText, "bottom-right", "rgba(0,0,0,0.2)", "danger");
+                }
+            });
+        });
+
+    });
+
+ var mymap = null; 
+
+ $(document).ready(function() {
+     const OT_ID = {{ ot.id_ot }};
+     const API_URL = `{% url "ubicacion-list" %}?ot=${OT_ID}`;
+     if ($('#map').length) {
+         mymap = L.map('map').setView([-12.0, -77.0], 16);
+         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+             attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+         }).addTo(mymap);
+         $.ajax({
+             url: API_URL,
+             type: 'GET',
+             dataType: 'json',
+             success: function(response) {
+                 if (response.count > 0 && response.results.length > 0) {
+                     const ubicacion = response.results[0];
+                     const [lat, lng] = ubicacion.coordenadas.split(',').map(c => parseFloat(c.trim()));
+                     if (!isNaN(lat) && !isNaN(lng)) {
+                         const newLatLng = L.latLng(lat, lng);
+                         const popupContent = `<b>OT ${OT_ID}</b><br>${ubicacion.direccion}`;
+                         mymap.setView(newLatLng, 16);
+                         L.marker(newLatLng).addTo(mymap).bindPopup(popupContent).openPopup();
+                     }
+                 }
+             }
+         });
+     }
+     // 1. Inicializar el editor Quill en el div #snow-editor
+    var quill = new Quill('#snow-editor', {
+        theme: 'snow',
+        modules: {
+            toolbar: [
+                [{ 'font': [] }, { 'size': [] }],
+                ['bold', 'italic', 'underline', 'strike'],
+                [{ 'color': [] }, { 'background': [] }],
+                [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+                ['link'],
+                ['clean']
+            ]
+        }
+    });
+
+    // 2. Localizar el formulario y el campo oculto
+    var form = document.querySelector('#form-edit-proyecto');
+    var hiddenInput = document.querySelector('#hiddenDescripcion');
+
+    if (form) {
+        // 3. Antes de enviar el formulario...
+        form.addEventListener('submit', function(e) {
+            
+            // 4. Copiar el contenido HTML del editor Quill...
+            var quillContent = quill.root.innerHTML;
+
+            // 5. ...al campo oculto (hidden input).
+            // Si el editor está "vacío", Quill deja <p><br></p>. 
+            // Lo limpiamos para no guardar eso.
+            if (quillContent === '<p><br></p>') {
+                hiddenInput.value = '';
+            } else {
+                hiddenInput.value = quillContent;
+            }
+        });
+    }
+ });
+</script>
+{% endblock %}

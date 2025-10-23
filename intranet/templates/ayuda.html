@@ -1,0 +1,139 @@
+{% extends 'base.html' %} {% block content %}
+<!-- start page title -->
+ <div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <div class="page-title-right">
+            </div>
+            <h4 class="page-title">Ayuda</h4>
+        </div>
+    </div>
+</div>
+<!-- end page title -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="mb-2">Documentos</h5>
+                <div class="row mx-n1 g-0">
+                    <div class="col-xxl-3 col-lg-6">
+                        <div class="card m-1 shadow-none border">
+                            <div class="p-2">
+                                <div class="row align-items-center">
+                                    <div class="col-auto">
+                                        <div class="avatar-sm">
+                                            <span class="avatar-title bg-light text-secondary rounded">
+                                                <i class="mdi mdi-file-pdf-box font-16"></i>
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="col ps-0">
+                                        <a href="../static/docs/REG. INTER. PLANOS PERU-VER III.pdf" target="_blank" class="text-muted fw-bold">REG. INTER. PLANOS PERU-VER III</a>
+                                        <p class="mb-0 font-13" id="tamañoArchivo"></p>
+                                    </div>
+                                </div> <!-- end row -->
+                            </div> <!-- end .p-2-->
+                        </div> <!-- end col -->
+                    </div> <!-- end col-->
+                    <div class="col-xxl-3 col-lg-6">
+                        <div class="card m-1 shadow-none border">
+                            <div class="p-2">
+                                <div class="row align-items-center">
+                                    <div class="col-auto">
+                                        <div class="avatar-sm">
+                                            <span class="avatar-title bg-light text-secondary rounded">
+                                                <i class="mdi mdi-file-excel-box font-16"></i>
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="col ps-0">
+                                        <a href="../static/docs/Formulario Persona Natural.xlsm" target="_blank" class="text-muted fw-bold">Formularios SUNARP</a>
+                                        <p class="mb-0 font-13" id="tamañoArchivo"></p>
+                                    </div>
+                                </div> <!-- end row -->
+                            </div> <!-- end .p-2-->
+                        </div> <!-- end col -->
+                    </div> <!-- end col-->
+                </div> <!-- end row-->
+                <div class="row mx-n1 g-0">
+                    <div class="col-xxl-3 col-lg-6">
+                        <div class="card m-1 shadow-none border">
+                            <div class="p-2">
+                                <div class="row align-items-center">
+                                    <div class="col-auto">
+                                        <div class="avatar-sm">
+                                            <span class="avatar-title bg-light text-secondary rounded">
+                                                <i class="mdi mdi-file-pdf-box font-16"></i>
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="col ps-0">
+                                        <a href="../static/docs/CVU.pdf" target="_blank" class="text-muted fw-bold">Cuadro de Valores Unitarios 2024</a>
+                                        <p class="mb-0 font-13" id="tamañoArchivo"></p>
+                                    </div>
+                                </div> <!-- end row -->
+                            </div> <!-- end .p-2-->
+                        </div> <!-- end col -->
+                    </div> <!-- end col-->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-12">
+        <!-- Simple card -->
+        <div class="card d-block">
+            <div class="card-body">
+                <h5 class="card-title ">Rastreador</h5>
+                <ol>
+                    <li>Inicia el temporizador en la página de Rastreador</li>
+                    <li>Escribe en lo que estás trabajando en la casilla de ¿En qué estás trabajando?</li>
+                    <li>Selecciona un proyecto/actividad</li>
+                    <li>Inicia el temporizador haciendo clic en el botón INICIAR</li>
+                    <li>Cuando termines trabajando, agrega un comentario y detén el temporizador haciendo clic en el botón de DETENER</li>
+                </ol>
+                <img src="../static/images/ayuda/rastreador.png" alt="rastreador" width="100%">
+                <p>Ten en cuenta que una vez que inicies el temporizador, seguirá en marcha hasta que lo detenga; estará en marcha incluso si abandonas la página o cierras el navegador</p>
+            </div> <!-- end card-body-->
+        </div> <!-- end card-->
+    </div><!-- end col -->
+</div>
+<div class="row">
+    <div class="col-12">
+        <!-- Simple card -->
+        <div class="card">
+            <div class="card-body">
+                <div class="text-center">
+                    <h3 class="">Ingreso de Actividades</h3>
+                </div>
+                <div class="row pt-5">
+                    <div class="col-lg-5 offset-lg-1">
+                        <!-- Question/Answer -->
+                        <div>
+                            <div class="faq-question-q-box">Q.</div>
+                            <h4 class="faq-question" data-wow-delay=".1s">CAD</h4>
+                            <p class="faq-answer mb-4">Se trabajara exclusivamente los CAD</p>
+                        </div>
+
+
+                    </div>
+                    <!--/col-md-5 -->
+
+                    <div class="col-lg-5">
+                        <!-- Question/Answer -->
+                        <div>
+                            <div class="faq-question-q-box">Q.</div>
+                            <h4 class="faq-question">Diseño</h4>
+                            <p class="faq-answer mb-4">Todo lo relacionado a imprimir planos</p>
+                        </div>
+
+                    </div>
+                    <!--/col-md-5-->
+                </div>
+            </div> <!-- end card-body-->
+        </div> <!-- end card-->
+    </div><!-- end col -->
+</div>
+
+{% endblock %} 

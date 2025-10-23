@@ -1,0 +1,55 @@
+.description-cell {
+  max-width: 250px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  position: relative;
+}
+
+.description-cell.expanded {
+  white-space: normal;
+  overflow: visible;
+}
+
+.description-tooltip {
+  display: none;
+  position: absolute;
+  background-color: #fff;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  padding: 10px;
+  z-index: 1000;
+  max-width: 400px;
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  white-space: normal;
+  text-align: left;
+}
+
+.description-cell:hover .description-tooltip {
+  display: block;
+}
+
+.form-control:focus {
+  color: #495057;
+  background-color: #fff;
+  border-color: #80bdff;
+  outline: 0;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.form-select:focus {
+  color: #495057;
+  background-color: #fff;
+  border-color: #80bdff;
+  outline: 0;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.btn-xs,
+.btn-group-xs > .btn {
+  --bs-btn-padding-y: 0.153rem;
+  --bs-btn-padding-x: 0.75rem;
+  --bs-btn-font-size: 0.6875rem;
+  --bs-btn-border-radius: 0.125rem;
+}

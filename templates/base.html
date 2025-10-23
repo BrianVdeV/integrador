@@ -1,0 +1,558 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <title>{{title}}{% block title %}{% endblock title %}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta content="A fully featured admin theme which can be used to build CRM, CMS, etc." name="description" />
+    <meta content="Coderthemes" name="author" />
+    <!-- App favicon -->
+    <link rel="shortcut icon" href="{% static 'images/favicon.ico'%}" />
+
+    <!-- Plugin css -->
+    <link rel="stylesheet" href="{% static 'vendor/daterangepicker/daterangepicker.css'%}" />
+    <link rel="stylesheet" href="{% static "vendor/jquery-toast-plugin/jquery.toast.min.css" %}">
+    <!-- Select2 css -->
+    <link href="{% static "vendor/select2/css/select2.min.css" %}" rel="stylesheet" type="text/css" />
+
+    <!-- Datatables css -->
+    <link href="{% static "vendor/datatables.net-bs5/css/dataTables.bootstrap5.min.css" %}" rel="stylesheet" type="text/css" />
+    <link href="{% static "vendor/datatables.net-responsive-bs5/css/responsive.bootstrap5.min.css" %}" rel="stylesheet" type="text/css" />
+    <link href="{% static "vendor/datatables.net-fixedcolumns-bs5/css/fixedColumns.bootstrap5.min.css" %}" rel="stylesheet" type="text/css" />
+    <link href="{% static "vendor/datatables.net-fixedheader-bs5/css/fixedHeader.bootstrap5.min.css" %}" rel="stylesheet" type="text/css" />
+    <link href="{% static "vendor/datatables.net-buttons-bs5/css/buttons.bootstrap5.min.css" %}" rel="stylesheet" type="text/css" />
+    <link href="{% static "vendor/datatables.net-select-bs5/css/select.bootstrap5.min.css" %}" rel="stylesheet" type="text/css" />
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+
+    {% block vendor_css %}{% endblock vendor_css %}
+    <!-- Theme Config Js -->
+    <script src="{% static 'js/hyper-config.js'%}"></script>
+
+    <link href="{% static 'css/vendor.min.css' %}" rel="stylesheet" type="text/css" />
+    <!-- App css -->
+    <link href="{% static 'css/app-saas.css' %}" rel="stylesheet" type="text/css" id="app-style" />
+    <link href="{% static 'css/estilos.css' %}" rel="stylesheet" type="text/css" />
+
+    <!-- Icons css -->
+    <link href="{% static 'css/icons.min.css'%}" rel="stylesheet" type="text/css" />
+    <!-- Moment js -->
+    <script src="{% static 'vendor/moment/moment.js' %}"></script>
+    <script src="{% static 'vendor/moment/locale/es.js' %}"></script>
+    <style>
+      @keyframes slideInLeft {
+        from {
+          transform: translateX(-100%);
+          opacity: 0;
+        }
+        to {
+          transform: translateX(0);
+          opacity: 1;
+        }
+      }
+
+      .toast.custom-slide {
+        animation: slideInLeft 0.5s ease forwards;
+        margin-bottom: 10px;
+      }
+
+      .toast-swiper {
+        height: 100px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <!-- Begin page -->
+    <div class="wrapper">
+      <!-- ========== Topbar Start ========== -->
+      {% include 'topbar.html' %}
+      <!-- ========== Topbar End ========== -->
+
+      <!-- ========== Left Sidebar Start ========== -->
+
+      {% include 'sidebar.html' %}
+      <!-- ========== Left Sidebar End ========== -->
+      <!-- ============================================================== -->
+      <!-- Start Page Content here -->
+      <!-- ============================================================== -->
+
+      <div class="content-page">
+        <div class="content">
+          <!-- Start Content-->
+          <div class="container-fluid">
+            {% block content %}
+            <!-- Aquí va el contenido de cada página -->
+            {% endblock %}
+            <!-- end page title -->
+          </div>
+          <!-- container -->
+        </div>
+        <!-- content -->
+
+        <!-- Footer Start -->
+        <footer class="footer">
+          <div class="container-fluid">
+            <div class="row">
+              <div class="col-md-6">
+                <script>
+                  document.write(new Date().getFullYear());
+                </script>
+                © Planos Perú
+              </div>
+              <div class="col-md-6">
+                <div class="text-md-end footer-links d-none d-md-block">
+                  <a href="javascript: void(0);">Acerca</a>
+                  <a href="javascript: void(0);">Soporte</a>
+                  <a href="javascript: void(0);">Contacto</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </footer>
+        <!-- end Footer -->
+      </div>
+
+      <!-- ============================================================== -->
+      <!-- End Page content -->
+      <!-- ============================================================== -->
+    </div>
+    <!-- END wrapper -->
+
+    <!-- Stacking Toast -->
+    <div aria-live="polite" aria-atomic="true" style="position: relative">
+      <!-- Position it -->
+      <div class="toast-container position-fixed bottom-0 start-0 p-3">
+        <div class="swiper toast-swiper">
+          <div class="swiper-wrapper" id="toast-wrapper">
+            <!-- Las notificaciones se insertarán aquí -->
+          </div>
+          <div class="swiper-pagination"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Theme Settings -->
+    {% include 'theme.html' %}
+
+    <!-- Vendor js -->
+    <script src="{% static 'js/vendor.min.js'%}"></script>
+
+    <!--  Select2 Plugin Js -->
+    <script src="{% static 'vendor/select2/js/select2.min.js' %}"></script>
+
+    <!-- Datatables js -->
+    <script src="{% static 'vendor/datatables.net/js/jquery.dataTables.min.js' %}"></script>
+    <script src="{% static 'vendor/datatables.net-bs5/js/dataTables.bootstrap5.min.js' %}"></script>
+    <script src="{% static 'vendor/datatables.net-responsive/js/dataTables.responsive.min.js' %}"></script>
+    <script src="{% static 'vendor/datatables.net-responsive-bs5/js/responsive.bootstrap5.min.js' %}"></script>
+    <script src="{% static 'vendor/datatables.net-fixedcolumns-bs5/js/fixedColumns.bootstrap5.min.js' %}"></script>
+    <script src="{% static 'vendor/datatables.net-fixedheader/js/dataTables.fixedHeader.min.js' %}"></script>
+    <script src="{% static 'vendor/datatables.net-buttons/js/dataTables.buttons.min.js' %}"></script>
+    <script src="{% static 'vendor/datatables.net-buttons-bs5/js/buttons.bootstrap5.min.js' %}"></script>
+    <script src="{% static 'vendor/datatables.net-buttons/js/buttons.html5.min.js' %}"></script>
+    <script src="{% static 'vendor/datatables.net-buttons/js/buttons.flash.min.js' %}"></script>
+    <script src="{% static 'vendor/datatables.net-buttons/js/buttons.print.min.js' %}"></script>
+    <script src="{% static 'vendor/datatables.net-keytable/js/dataTables.keyTable.min.js'%}"></script>
+    <script src="{% static 'vendor/datatables.net-select/js/dataTables.select.min.js'%}"></script>
+
+    <!-- Toastr js -->
+    <script src="{% static 'vendor/jquery-toast-plugin/jquery.toast.min.js' %}"></script>
+    <script src="{% static 'js/pages/demo.toastr.js'%}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+    <!-- Luego carga los scripts que dependen de jQuery -->
+    <script src="{% static 'js/jquery.rateit.min.js' %}"></script>
+    <script src="{% static 'js/ui/component.rating.js' %}"></script>
+    <!-- Input Mask js -->
+    <script src="{% static 'vendor/jquery-mask-plugin/jquery.mask.min.js' %}"></script>
+    <!-- Chart.js -->
+    <script src="{% static 'vendor/chart.js/chart.min.js' %}"></script>
+    {% block vendor_js %} {% endblock vendor_js %}
+    <!-- App js -->
+    <script src="{% static 'js/app.min.js'%}"></script>
+    <script src="{% static 'js/scripts.js' %}"></script>
+    <script>
+      $(document).ready(function () {
+        const today = moment();
+        let bgPrimarySonado = false; // 👈 Bandera para controlar el sonido
+
+        const sonido = new Audio("{% static 'sounds/notification.mp3' %}");
+        $.get("{% url 'notificaciones' %}", function (data) {
+          data.forEach((evento) => {
+            const inicio = moment(evento.start);
+            const dias = inicio.startOf("day").diff(today.startOf("day"), "days");
+
+            let diasTexto = "";
+            if (dias === 0) {
+              diasTexto = "Hoy";
+            } else if (dias === 1) {
+              diasTexto = "Mañana";
+            } else {
+              diasTexto = `En ${dias} día(s)`;
+            }
+            const mensaje = evento.mensaje || "Sin descripción";
+            const titulo = evento.titulo || "Evento";
+            const clase = evento.className || "bg-primary";
+            if (clase === "bg-primary" && !bgPrimarySonado) {
+              sonido.play().catch((err) => console.error("Error al reproducir sonido:", err));
+              bgPrimarySonado = true;
+            }
+            const slide = `
+              <div class="swiper-slide">
+                <div class="toast fade show" role="alert" aria-live="assertive" aria-atomic="true">
+                  <div class="toast-header ${clase} text-white">
+                    <strong class="me-auto text-truncate">${titulo}</strong>
+                    <small class="ms-4 text-nowrap">${diasTexto}</small>
+                  </div>
+                  <div class="toast-body">
+                    ${mensaje}
+                  </div>
+                </div>
+              </div>
+            `;
+
+            $("#toast-wrapper").append(slide);
+          });
+
+          // Inicializar Swiper después de insertar notificaciones
+          new Swiper(".toast-swiper", {
+            direction: "vertical",
+            loop: true,
+            autoplay: {
+              delay: 5000,
+              disableOnInteraction: false,
+            },
+            pagination: {
+              el: ".swiper-pagination",
+              clickable: true,
+            },
+          });
+        });
+      });
+    </script>
+    <script>
+      $(document).ready(function () {
+        $.ajax({
+          url: "{% url 'sidebar' %}",
+          type: "get",
+          dataType: "json",
+          headers: {
+            "X-CSRFToken": "{{ csrf_token }}"
+          },
+          success: function (response) {
+            const badge = document.getElementById("badge-agenda");
+
+            if (response.agenda !== undefined) {
+              if (response.agenda > 0) {
+                badge.textContent = response.agenda;
+                badge.style.display = 'inline-block';
+              } else {
+                badge.style.display = 'none';  // Oculta el badge si agenda = 0
+              }
+            }
+          }
+        });
+
+        $.ajax({
+          url: "{% url "notificaciones-toast" %}",  // Ajusta la URL según tu configuración
+          type: "GET",
+          dataType: "json",
+          success: function (response) {
+              if (response.length > 0) {
+                  response.forEach(notificacion => {
+                      jqueryToast(notificacion.titulo, notificacion.descripcion, "warning");
+                  });
+              }
+          },
+          error: function (xhr, status, error) {
+              console.error("Error al cargar notificaciones:", error);
+          }
+        });
+        {% if messages %}
+          {% for message in messages %}
+            {% if message.tags == "success" %}
+              jqueryToast("¡Bien hecho!","{{ message }}","success");
+              {% elif message.tags == "error" %}
+              $.NotificationApp.send("Error","{{ message }}","bottom-right","rgba(0,0,0,0.2)","error");
+            {% endif %}
+          {% endfor %}
+        {% endif %}
+
+        let totalNotifications = 0;
+        $.ajax({
+            url: '{% url "obtener_notificaciones" %}',  // Nueva vista que devuelve todas las notificaciones
+            method: 'GET',
+            success: function (data) {
+              console.log("Datos recibidos:", data);  // 👀 Verifica los datos en la consola
+                let today = moment().startOf('day');
+
+                // Agregar vencimientos y reingresos
+                data.vencimientos.forEach(item => {
+                    agregarNotificacion(item.ot__id_ot, `Reing./Ven.: ${item.vencimiento || item.reingreso}`, "bg-primary", "mdi-comment-account-outline");
+                    totalNotifications++;
+                });
+
+                // Agregar cumpleaños
+                data.cumple.forEach(item => {
+                    let nombre = `${item.id_user__first_name} ${item.id_user__last_name}`;
+                    let fechaNacimiento = moment(item.nac_col, "YYYY-MM-DD");
+                    let cumpleAnioActual = fechaNacimiento.clone().year(today.year());
+
+                    if (cumpleAnioActual.isBefore(today, 'day')) {
+                        cumpleAnioActual.add(1, 'year');
+                    }
+
+                    let diasRestantes = cumpleAnioActual.diff(today, 'days');
+                    if (diasRestantes >= 0 && diasRestantes < 8) {
+                        let fechaMostrar = cumpleAnioActual.format("DD/MM");
+                        let mensaje = `Cumpleaños el ${fechaMostrar} 🎉 ${diasRestantes === 0 ? "(Hoy)" : diasRestantes === 1 ? "(Mañana)" : `(En ${diasRestantes} días)`}`;
+                        agregarNotificacion(nombre, mensaje, "bg-info", "mdi-cake-variant");
+                        totalNotifications++;
+                    }
+                });
+
+                // Agregar feriados
+                data.feriados.forEach(item => {
+                    let fechaFeriado = moment(item.date, "YYYY-MM-DD");
+                    let diasRestantes = fechaFeriado.diff(today, 'days');
+
+                    if (diasRestantes >= 0 && diasRestantes < 8) {
+                        let fechaMostrar = fechaFeriado.format("DD/MM");
+                        let mensaje = `Feriado el ${fechaMostrar} 🎉 (En ${diasRestantes} días)`;
+                        agregarNotificacion(item.name, mensaje, "bg-warning", "mdi-calendar-star");
+                        totalNotifications++;
+                    }
+                });
+
+                // Actualizar el contador de la campanita
+                updateNotificationBadge(totalNotifications);
+            },
+            error: function (xhr, status, error) {
+                console.error('Error al obtener las notificaciones:', error);
+            }
+        });
+
+
+        function verificarUsuariosSinActividad() {
+          $.ajax({
+              url: '{% url "actividades-usuarios-sin-actividad" %}',
+              method: 'GET',
+              success: function (data) {
+                      let mensaje = data.mensaje;
+
+                      // Si el mensaje está vacío (todos los usuarios tienen actividad), no hacer nada
+                      if (mensaje.trim() === "") {
+                          return;  // No hacer nada si no hay colaboradores sin actividad
+                      }
+
+                      // 🔹 Buscar si ya existe la notificación
+                      let notificacionExistente = $('#notifications-container .notify-item[data-type="usuarios-sin-actividad"]');
+
+                      // 🔹 Si ya existe, solo actualizar el mensaje, sin incrementar el contador
+                      if (notificacionExistente.length > 0) {
+                          notificacionExistente.find(".noti-item-subtitle").text(mensaje);
+                      } else {
+                          // 🔹 Si NO existe, eliminar la notificación anterior y agregar la nueva
+                          $('#notifications-container .notify-item[data-type="usuarios-sin-actividad"]').remove();
+
+                          $('#notifications-container').append(`
+                              <a href="javascript:void(0);" class="dropdown-item p-0 notify-item card shadow-none mb-2" data-type="usuarios-sin-actividad">
+                                  <div class="card-body">
+                                      <div class="d-flex align-items-center">
+                                      <div class="notify-icon bg-danger" style="width: 60px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 50%;">                                        <i class="mdi mdi-account-off"></i>
+                                          </div>
+                                          <div class="flex-grow-1 text-truncate ms-2">
+                                              <h5 class="noti-item-title fw-semibold font-14">Usuarios sin actividad</h5>
+                                              <small class="noti-item-subtitle text-muted">${mensaje}</small>
+                                          </div>
+                                      </div>
+                                  </div>
+                              </a>
+                          `);
+
+                          // ✅ SOLO incrementar el contador si se agrega una nueva notificación
+                          totalNotifications++;
+                          updateNotificationBadge(totalNotifications);
+                      }
+
+                      if (typeof $.toast !== "undefined") {
+                          setTimeout(function() {
+                              $.toast({
+                                  heading: "ALERTA DE USUARIOS",
+                                  text: mensaje,
+                                  position: "top-right",
+                                  icon: "warning",
+                                  loaderBg: "rgba(0,0,0,0.2)",
+                                  hideAfter: 10000,
+                              });
+
+                              // 🎵 Reproducir sonido personalizado
+                              let audio = new Audio('{% static "sounds/notification1.mp3" %}');
+                              audio.play();
+
+                          }, 3000); // ⏳ Espera 3 segundos antes de mostrar la notificación
+                      } else {
+                          console.error("$.toast no está definido.");
+                      }
+              },
+              error: function () {
+                  console.error("Error al obtener la información.");
+              }
+          });
+        }
+
+      // 🕗 Programar la notificación para usuarios sin actividad
+      function programarNotificacionUsuariosSinActividad() {
+          let intervaloNotificaciones = null;
+
+          function verificarYDetener() {
+              let ahora = new Date();
+              let diaSemana = ahora.getDay(); // 0 = Domingo, 1 = Lunes, ..., 6 = Sábado
+              let horaActual = ahora.getHours();
+              let minutosActuales = ahora.getMinutes();
+              let tiempoActual = horaActual * 60 + minutosActuales; // Convertir a minutos totales
+
+              // ⛔ Detener si NO es día laboral (Lunes a Viernes)
+              if (diaSemana === 0 || diaSemana === 6) {
+                  console.log("⏹️ Fin de semana - No se ejecutan verificaciones.");
+                  if (intervaloNotificaciones) {
+                      clearInterval(intervaloNotificaciones);
+                      intervaloNotificaciones = null;
+                  }
+                  return;
+              }
+
+              // Definir rangos de horario permitido en minutos
+              let inicioManana = 8 * 60; // 8:00 AM = 480 minutos
+              let finManana = 13 * 60; // 1:00 PM = 780 minutos
+              let inicioTarde = 13 * 60 + 30; // 1:30 PM = 810 minutos
+              let finTarde = 18 * 60 + 30; // 6:30 PM = 1110 minutos
+
+              // ⛔ Verificar si está fuera de horario laboral
+              let dentroHorario = (tiempoActual >= inicioManana && tiempoActual < finManana) ||
+                                (tiempoActual >= inicioTarde && tiempoActual <= finTarde);
+
+              if (!dentroHorario) {
+                  console.log("⏹️ Fuera de horario laboral - Deteniendo verificaciones.");
+                  if (intervaloNotificaciones) {
+                      clearInterval(intervaloNotificaciones);
+                      intervaloNotificaciones = null;
+                  }
+                  return;
+              }
+
+              // ✅ Ejecutar verificación SOLO si es superusuario
+              {% if user.is_superuser %}
+              console.log("🔔 Verificando usuarios sin actividad...");
+              verificarUsuariosSinActividad();
+              {% endif %}
+          }
+
+          // 🔄 Ejecutar verificación inmediatamente y luego cada 2 minutos
+          function iniciarMonitoreo() {
+              verificarYDetener(); // Primera ejecución inmediata
+              
+              // Limpiar intervalo anterior si existe
+              if (intervaloNotificaciones) {
+                  clearInterval(intervaloNotificaciones);
+              }
+              
+              // Configurar nuevo intervalo cada 2 minutos
+              intervaloNotificaciones = setInterval(verificarYDetener, 2 * 60 * 1000);
+          }
+
+          // 🚀 Iniciar monitoreo
+          iniciarMonitoreo();
+
+          // 🔄 Reiniciar monitoreo cada día a las 12:01 AM para validar día de la semana
+          let ahoraMs = new Date();
+          let medianoche = new Date(ahoraMs.getFullYear(), ahoraMs.getMonth(), ahoraMs.getDate() + 1, 0, 1, 0, 0);
+          let tiempoHastaMedianoche = medianoche - ahoraMs;
+
+          setTimeout(function reiniciarDiario() {
+              console.log("🔄 Reiniciando monitoreo diario...");
+              iniciarMonitoreo();
+              // Programar siguiente reinicio en 24 horas
+              setTimeout(reiniciarDiario, 24 * 60 * 60 * 1000);
+          }, tiempoHastaMedianoche);
+      }
+
+      // 🔄 Iniciar la programación de la notificación
+      programarNotificacionUsuariosSinActividad();
+      window.verificarUsuariosSinActividad = verificarUsuariosSinActividad;
+
+
+        // Función para actualizar el contador en la campanita
+        function updateNotificationBadge(count) {
+            const notificationBadge = $('.nav-link .badge');  // El contador en la campanita
+            if (count > 0) {
+                notificationBadge.text(count).removeClass('d-none');  // Mostrar el contador si hay notificaciones
+            } else {
+                notificationBadge.addClass('d-none');  // Ocultar el contador si no hay notificaciones
+            }
+        }
+      });
+    </script>
+    <script>
+      function initSearch() {
+        var $input = $("#top-search");
+        var $dropdown = $("#search-dropdown");
+
+        $input.on("input", function () {
+          var query = $input.val().trim();
+
+          if (query.length >= 2) {
+            $.ajax({
+              url: `{% url "ot-list" %}?search=${query}`,
+              method: "GET",
+              success: function (response) {
+                $dropdown.empty();
+
+                if (response.results.length === 0) {
+                  $dropdown.html(`
+                            <div class="dropdown-header noti-title">
+                                <h5 class="text-overflow mb-2">Sin resultados</h5>
+                            </div>
+                        `);
+                } else {
+                  $dropdown.append(`
+                            <div class="dropdown-header noti-title">
+                                <h5 class="text-overflow mb-2">Se encontraron <span class="text-danger">${response.count}</span> resultados</h5>
+                            </div>
+                        `);
+
+                  $.each(response.results, function (i, ot) {
+                    $dropdown.append(`
+                                <a href="{% url "proyectos" %}${ot.id_ot}" class="dropdown-item notify-item text-truncate">
+                                    <i class="uil-file-alt font-16 me-1"></i>
+                                    <span>${ot.id_ot_str}</span>
+                                </a>
+                            `);
+                  });
+                }
+
+                $dropdown.addClass("d-block");
+              },
+              error: function () {
+                $dropdown.html(`
+                        <div class="dropdown-header noti-title">
+                            <h5 class="text-danger mb-2">Error al buscar</h5>
+                        </div>
+                    `);
+                $dropdown.addClass("d-block");
+              },
+            });
+          } else {
+            $dropdown.removeClass("d-block");
+          }
+        });
+      }
+
+      $(document).ready(function () {
+        initSearch();
+      });
+    </script>
+    {% block scripts %}{% endblock %}
+  </body>
+</html>

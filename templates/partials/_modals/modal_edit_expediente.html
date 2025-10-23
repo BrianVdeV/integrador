@@ -1,0 +1,55 @@
+<div id="mdlEdit" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="standard-modalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title" id="standard-modalLabel">Editar</h4>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-hidden="true"></button>
+      </div>
+      <form id="frmEdit">
+        <div class="modal-body">
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label for="sltEntidad2" class="form-label">Entidad</label>
+              {{form.entidad}}
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="numero" class="form-label">Titulo</label>
+              {{form.numero}}
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label for="estado" class="form-label">Estado</label>
+              <select name="estado" id="estado" class="form-select">
+                {% for estado,color in estados.items %}
+                <option value="{{ estado }}">{{ estado }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label" for="drpPre">Presentación</label>
+              {{form.presentacion}}
+            </div>
+          </div>
+          <div class="row g-2">
+            <!-- Autoclose -->
+            <div class="col-md-6 mb-3">
+              <label class="form-label" for="drpReing">Reingreso</label>
+              {{form.reingreso}}
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label" for="drpVen">Vencimiento</label>
+              {{form.vencimiento}}
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+          <button type="submit" class="btn btn-success">Actualizar</button>
+        </div>
+      </form>
+    </div>
+    <!-- /.modal-content -->
+  </div>
+  <!-- /.modal-dialog -->
+</div>

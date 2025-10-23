@@ -1,0 +1,45 @@
+<div id="mdlCreate" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="standard-modalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title" id="standard-modalLabel">Crear nuevo proyecto</h4>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-hidden="true"></button>
+      </div>
+      <form method="post">
+        {% csrf_token %}
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="txtOT" class="form-label">OT</label>
+            <input type="number" class="form-control" id="txtOT" name="txtOT" aria-describedby="emailHelp" />
+          </div>
+          <div class="mb-3">
+            <label for="txtTipoProyecto" class="form-label">Tipo de Proyecto</label>
+            <select class="form-control" id="txtTipoProyecto" name="txtTipoProyecto" required>
+              <option value="" disabled selected>Seleccione un tipo</option>
+              {% for tipo in tipos_proyecto %}
+              <option value="{{ tipo.id }}" data-codigo="{{ tipo.codigo }}">{{ tipo.nom_tipo }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="mb-3">
+            <label for="txtProyecto" class="form-label"> Nombre de Proyecto</label>
+            <input type="text" class="form-control" id="txtProyecto" name="txtProyecto" />
+          </div>
+          <div class="mb-3">
+            <label for="txtColor" class="form-label">Color</label>
+            <input class="form-control" id="txtColor" type="color" name="txtColor" value="#e5e5e5" />
+          </div>
+          <div class="mb-3">
+            <label for="txtFecha" class="form-label">Fecha de Inicio</label>
+            <input type="date" class="form-control" name="txtFecha" id="txtFecha" value="{{ today|date:'Y-m-d' }}" required />
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-primary" type="submit">Crear</button>
+        </div>
+      </form>
+    </div>
+    <!-- /.modal-content -->
+  </div>
+  <!-- /.modal-dialog -->
+</div>

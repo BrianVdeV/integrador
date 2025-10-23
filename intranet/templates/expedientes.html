@@ -1,0 +1,244 @@
+{% extends 'base.html' %} {% load static %} {% block title %}Expedientes{% endblock %} {% block vendor_js %}
+<script src="https://cdn.datatables.net/plug-ins/2.2.2/dataRender/datetime.js"></script>
+<script src="{% static 'vendor/daterangepicker/moment.min.js' %}"></script>
+<script src="{% static 'vendor/daterangepicker/daterangepicker.js' %}"></script>
+{% endblock vendor_js %} {% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <h4 class="page-title">Expedientes</h4>
+        </div>
+    </div>
+</div>
+<div class="row">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-body">
+      <div style="display: none;">
+        <div id="datatable-custom-button">
+            <a data-bs-target="#mdlAddExp" data-bs-toggle="modal" class="btn btn-primary rounded-pill">
+                <i class="mdi mdi-plus"></i> Crear expediente
+            </a>
+        </div>
+          <div id="datatable-custom-filter">
+              <select id="filtroOtEstado" class="form-select" style="width: 180px;">
+                  <option value="">Todas las OTs</option>
+                  <option value="Activo">OTs Activas</option>
+                  <option value="Finalizado">OTs Finalizadas</option>
+                  <option value="Detenido">OTs Detenidas</option>
+              </select>
+          </div>
+        </div>
+        <table id="table" class="table table-sm tb-hover dt-responsive w-100">
+          <thead>
+            <tr>
+              <th>OT</th>
+              <th>Entidad</th>
+              <th>Año</th>
+              <th>Titulo</th>
+              <th>Estado</th>
+              <th>Presentación</th>
+              <th>Reingreso</th>
+              <th>Vencimiento</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- /.modal add -->
+{% include 'partials/_modals/modal_add_expediente.html' %}
+<!-- /.modal edit -->
+{% include 'partials/_modals/modal_edit_expediente.html' %}
+<!-- /.modal delete -->
+{% include 'partials/_modals/modal_delete_expediente.html' %} {% endblock %} {% block scripts %}
+<script src="{% static 'js/pages/expedientes.js' %}"></script>
+<script>
+  $(document).ready(function () {
+    //Datatables
+    var table = $("#table").DataTable({
+        dom: "<'row mb-2'<'col-12 col-md-6 d-flex align-items-center'l><'col-12 col-md-6 d-flex align-items-center'f>>" +
+             "<'row'<'col-sm-12'tr>>" +
+             "<'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
+        // FIN: DOM
+
+      language: {
+        url: "https://cdn.datatables.net/plug-ins/2.2.1/i18n/es-MX.json",
+      },
+      pageLength: 50,
+      rowId: "id",
+      processing: true,
+      ordering: false,
+      ajax: {
+        url: "{% url "expedientes-list" %}",
+        type: "GET",
+        // Hacemos que 'data' sea una función para enviar el filtro
+        data: function (d) {
+          // Añade el valor del filtro al request GET
+          d.ot_estado = $("#filtroOtEstado").val();
+        },
+        dataSrc: "results"
+      },
+      columns: [
+        { data: "ot_str" },
+        { data: "entidad" },
+        { data: "presentacion" },
+        { data: "numero" },
+        { data: "estado" },
+        { data: "presentacion" },
+        { data: "reingreso" },
+        { data: "vencimiento" },
+        { data: null },
+      ],
+      columnDefs: [
+        {
+          targets: -1,
+          data: null,
+          defaultContent:
+            '<div class="dropdown card-widgets">' +
+            '<a href="#" class="dropdown-toggle arrow-none" data-bs-toggle="dropdown" aria-expanded="false"><i class="uil uil-ellipsis-h"></i></a>' +
+            '<div class="dropdown-menu dropdown-menu-end">' +
+            '<a href="javascript:void(0);" class="dropdown-item edit"><i class="uil uil-edit me-1"></i>Editar</a>' +
+            '<a href="javascript:void(0);" class="dropdown-item text-danger delete"><i class="uil uil-trash-alt me-1"></i>Eliminar</a>' +
+            "</div>" +
+            "</div>",
+        },
+        {
+          targets: 2,
+          render: DataTable.render.moment( 'YYYY' )
+        },
+        {
+          targets: [5, 6, 7], // La columna que deseas formatear
+          render: DataTable.render.moment( 'DD/MM/YYYY' )
+        },
+      ],
+      drawCallback: function () {
+        $(".dataTables_paginate > .pagination").addClass("pagination-rounded");
+      },
+      createdRow: function (row, data, dataIndex) {
+        // Personaliza la fila aquí
+        var estado = data.estado;
+        var color = colorMapping[estado] || "black"; // Usa el color asignado o negro si no hay coincidencia
+        $(row).find("td:eq(4)").css("color", color);
+        if (data.estado !== "Inscrito" && data.estado !== "Tachado") {
+          checkAndHighlightDate(row, data.reingreso, 6);
+          checkAndHighlightDate(row, data.vencimiento, 7);
+        }
+      },
+      
+      // ===================================================
+      // AQUÍ ESTÁ LA CORRECCIÓN
+      // Esta función se ejecuta DESPUÉS de que la tabla se dibuja
+      // ===================================================
+      initComplete: function(settings, json) {
+          
+          // 1. Mueve el botón "Crear expediente"
+          $("#datatable-custom-button").contents().prependTo(".dataTables_length").addClass("me-2");
+
+          // 2. Mueve el Filtro OT
+          $("#datatable-custom-filter").contents().prependTo(".dataTables_filter").addClass("me-2");
+
+          // 3. Ajusta el layout del filtro
+          $(".dataTables_filter").addClass("d-flex ms-auto");
+
+          // 4. Mueve el listener AQUÍ ADENTRO para asegurarte
+          //    de que el filtro (#filtroOtEstado) ya existe y está visible
+          $("#filtroOtEstado").on("change", function () {
+            table.ajax.reload(); // Recarga la tabla cuando el filtro cambia
+          });
+      }
+      // ===================================================
+      // FIN DE LA CORRECCIÓN
+      // ===================================================
+
+    });
+    // FIN: Event listener
+
+  });
+
+  $(document).on("submit", "#frmAdd", function (e) {
+    e.preventDefault();
+    $.ajax({
+      url: `../api/expedientes/`,
+      method: "POST",
+      headers: {
+        "X-CSRFToken": "{{ csrf_token }}",
+      },
+      data: $(this).serialize(),
+      success: function (res) {
+        $("#mdlAddExp").modal("hide");
+        $("#table").DataTable().ajax.reload(null, false);
+        $.NotificationApp.send("¡Bien hecho!", "Expediente creado con éxito", "bottom-right", "rgba(0,0,0,0.2)", "success");
+      },
+      error: function (xhr) {
+        $.NotificationApp.send("¡Error!", "Error al crear expediente: " + xhr.responseText, "bottom-right", "rgba(0,0,0,0.2)", "error");
+      },
+    });
+  });
+
+  $(document).on("click", ".edit", function () {
+    const id = $(this).closest("tr").attr("id");
+    $("#frmEdit").attr("data-id", id);
+    $.get(`../api/expedientes/${id}/`, function (data) {
+      $('select[name="estado"]').val(data.estado);
+      $('select[name="entidad"]').val(data.entidad);
+      $('input[name="numero"]').val(data.numero);
+      $('input[name="presentacion"]').val(moment(data.presentacion).format("YYYY-MM-DD"));
+      $('input[name="reingreso"]').val(moment(data.reingreso).format("YYYY-MM-DD"));
+      $('input[name="vencimiento"]').val(moment(data.vencimiento).format("YYYY-MM-DD"));
+    });
+    $("#mdlEdit").modal("show");
+  });
+
+  $(document).on("submit", "#frmEdit", function (e) {
+    e.preventDefault();
+    const expedienteId = $(this).attr("data-id");
+    $.ajax({
+      url: `../api/expedientes/${expedienteId}/`,
+      method: "PATCH",
+      headers: {
+        "X-CSRFToken": "{{ csrf_token }}",
+      },
+      data: $(this).serialize(),
+      success: function (res) {
+        $("#mdlEdit").modal("hide");
+        $("#table").DataTable().ajax.reload(null, false);
+        $.NotificationApp.send("¡Bien hecho!", "Expediente actualizado con éxito", "bottom-right", "rgba(0,0,0,0.2)", "success");
+      },
+      error: function (xhr) {
+        $.NotificationApp.send("¡Error!", "Error al actualizar el expediente: " + xhr.responseText, "bottom-right", "rgba(0,0,0,0.2)", "error");
+      },
+    });
+  });
+
+  //Modal Delete
+  $(document).on("click", ".delete", function () {
+    const id = $(this).closest("tr").attr("id");
+    $("#frmDelete").attr("data-id", id);
+    $("#mdlDelete").modal("show");
+  });
+
+  $(document).on("click", "#frmDelete", function (e) {
+    e.preventDefault();
+    const expedienteToDelete = $(this).attr("data-id");
+    $.ajax({
+      url: `../api/expedientes/${expedienteToDelete}/`, // tu endpoint DRF
+      method: "DELETE",
+      headers: {
+        "X-CSRFToken": "{{ csrf_token }}",
+      },
+      success: function (response) {
+        $("#mdlDelete").modal("hide");
+        $("#table").DataTable().ajax.reload();
+        $.NotificationApp.send("¡Bien hecho!", "Expediente eliminado con éxito", "bottom-right", "rgba(0,0,0,0.2)", "success");
+      },
+      error: function (xhr) {
+        $.NotificationApp.send("¡Error!", "Error al eliminar el expediente: " + xhr.responseText, "bottom-right", "rgba(0,0,0,0.2)", "error");
+      },
+    });
+  });
+</script>
+{% endblock %}

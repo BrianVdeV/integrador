@@ -1,0 +1,306 @@
+{% extends 'base.html' %}{% load static %}{% block title %}Resumen{% endblock %} {% block vendor_js %}
+<!-- Daterangepicker js -->
+<script src="{% static 'vendor/daterangepicker/moment.min.js' %}"></script>
+<script src="{% static 'vendor/daterangepicker/daterangepicker.js' %}"></script>
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+{% endblock vendor_js %} {% block content %}
+<!-- start page title -->
+<div class="row">
+  <div class="col-12">
+    <div class="page-title-box">
+      <div class="page-title-right">
+        <form class="d-flex">
+          <div class="input-group">
+            <input class="form-control form-control-light" type="text" id="daterange_textbox" />
+            <span class="input-group-text bg-primary border-primary text-white">
+              <i class="mdi mdi-calendar-range font-13"></i>
+            </span>
+          </div>
+        </form>
+      </div>
+      <h4 class="page-title">{{title}}</h4>
+    </div>
+  </div>
+</div>
+<!-- end page title -->
+<div class="row">
+  <div class="col-md-12">
+    <div class="card">
+      <div class="card-body">
+        <table class="table table-sm table-hover w-100" id="table">
+          <thead>
+            <tr>
+              <th>Entrada de Tiempo</th>
+              <th>OT</th>
+              <th>Resp.</th>
+              <th>Tiempo</th>
+              <th>Total (h)</th>
+              <th>Total (decimal)</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="row">
+  <div class="col">
+    <div class="card">
+      <div class="card-body">
+        <h4 class="header-title mb-4">Horas Registradas por Dia</h4>
+
+        <div dir="ltr">
+          <div class="mt-3">
+            <div id="chart"></div>
+          </div>
+        </div>
+      </div>
+      <!-- end card body-->
+    </div>
+    <!-- end card -->
+  </div>
+  <!-- end col-->
+</div>
+{% endblock %} {% block scripts %}
+<script>
+  start_date = moment().startOf("week").format("YYYY-MM-DD");
+  end_date = moment().endOf("week").format("YYYY-MM-DD");
+  let chartInstance = null;
+
+  $(document).ready(function () {
+      let start_date = moment().startOf("week").format("YYYY-MM-DD");
+      let end_date = moment().endOf("week").format("YYYY-MM-DD");
+      let searchValue = ""; // 🔹 Inicialmente vacío
+
+      // 🔹 Carga inicial del gráfico sin necesidad de buscar
+      fetch_data(start_date, end_date);
+      fetch_chart(start_date, end_date, searchValue);
+
+      function fetch_data(start_date, end_date) {
+          $("#table").DataTable({
+              language: {
+                  url: "https://cdn.datatables.net/plug-ins/2.2.1/i18n/es-MX.json",
+              },
+              pageLength: 10,
+              order: [],
+              processing: true,
+              serverSide: true,
+              ajax: {
+                  url: "{% url 'informes-detallado' %}",
+                  data: function (d) {
+                      d.start_date = start_date;
+                      d.end_date = end_date;
+                  },
+              },
+              columns: [
+                  { data: "tarea" },
+                  {
+                      data: null,
+                      render: function (data) {
+                          return "<div class='truncate-cell'>" + data.ot + "</div>";
+                      },
+                  },
+                  { data: "user" },
+                  {
+                      data: null,
+                      render: function (data) {
+                          let horIni = data.inicio || "N/A";
+                          let horFin = data.fin || "N/A";
+                          let fecha = data.fecha || "N/A";
+
+                          return (
+                              '<div class="row"><div class="col-12 text-nowrap">' +
+                              horIni +
+                              " - " +
+                              horFin +
+                              " </div></div>" +
+                              '<div class="row"><div class="col-12">' +
+                              fecha +
+                              "</div></div>"
+                          );
+                      },
+                  },
+                  { data: "total" },
+                  { data: "total_decimal" },
+              ],
+              {% if user.is_superuser%}
+          dom: "<'row'<'col-md-6'B><'col-md-6'f>>" +
+            "<'row'<'col-12'tr>>" +
+            "<'row'<'col-md-5'i><'col-md-7'p>>",
+          buttons: [
+              {
+                  text: 'Exportar a Excel',
+                  className: "btn-success",
+                  action: function () {
+                      // Captura el valor del filtro de búsqueda
+                      const searchValue = $('.form-control-sm').val();
+                      // Construye los parámetros de la solicitud
+                      let params = $.param({
+                          start_date: start_date,
+                          end_date: end_date,
+                          search_value: searchValue // Incluye el término de búsqueda
+                      });window.location.href = "{% url 'exportar_resumen_excel' %}?" + params;
+                    }
+                }
+            ],
+            {% endif %}
+              columnDefs: [
+                  {
+                      targets: -1,
+                      className: "fw-bold",
+                  },
+              ],
+              drawCallback: function () {
+                  $(".dataTables_paginate > .pagination").addClass("pagination-rounded");
+              },
+          });
+      }
+
+      $("#daterange_textbox").daterangepicker(
+          {
+              ranges: {
+                  "Esta semana": [moment().startOf("week"), moment().endOf("week")],
+                  "La semana pasada": [
+                      moment().subtract(1, "week").startOf("week"),
+                      moment().subtract(1, "week").endOf("week").subtract(0, "days"),
+                  ],
+              },
+              locale: {
+                  format: "DD/MM/YYYY",
+                  separator: " - ",
+                  applyLabel: "Aplicar",
+                  cancelLabel: "Cancelar",
+                  fromLabel: "Desde",
+                  toLabel: "Hasta",
+                  customRangeLabel: "Personalizado",
+                  weekLabel: "S",
+                  daysOfWeek: ["Do", "Lu", "Ma", "Mi", "Ju", "Vi", "Sa"],
+                  monthNames: [
+                      "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+                      "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre",
+                  ],
+                  firstDay: 0,
+              },
+              alwaysShowCalendars: true,
+              showCustomRangeLabel: false,
+              opens: "left",
+              autoApply: true,
+              format: "YYYY-MM-DD",
+              startDate: moment().startOf("week"),
+              endDate: moment().endOf("week"),
+          },
+          function (start, end) {
+              start_date = start.format("YYYY-MM-DD");
+              end_date = end.format("YYYY-MM-DD");
+
+              $("#table").DataTable().destroy();
+              fetch_data(start_date, end_date);
+              fetch_chart(start_date, end_date, searchValue); // 🔹 Actualiza el gráfico al cambiar el rango
+          }
+      );
+
+      // 🔹 Detectar cambios en el buscador y actualizar solo el gráfico
+      $(document).on("input", ".form-control-sm", function () {
+          searchValue = $(this).val();
+          fetch_chart(start_date, end_date, searchValue);
+      });
+  });
+
+  function fetch_chart(start_date, end_date,searchValue) {
+    $.ajax({
+        url: '{% url "chart" %}',
+        type: 'GET',
+        data: { start_date: start_date, end_date: end_date, "search[value]": searchValue },
+        dataType: 'json',
+        success: function (data) {
+            var options = {
+              series: data.datasets.map(ds => {
+                return {
+                    name: ds.label,
+                    data: ds.data,
+                    data_label: ds.data_label // 👈 Agregamos esto
+
+                };
+            }),
+                chart: {
+                    type: 'bar',
+                    height: 400,
+                    stacked: true, // 📌 Activa las barras apiladas
+                    toolbar: {
+                        show: true // 📌 Agrega herramientas de zoom, exportación, etc.
+                    }
+
+                },
+                plotOptions: {
+                  bar: {
+                      dataLabels: {
+                          total: {
+                              enabled: true,  // Habilita los totales
+                              formatter: function (val, opts) {
+                                let totalText = data.totals[opts.dataPointIndex] || "";
+                                return totalText === "0:00" ? "" : totalText; // Oculta los "0h 0m"
+                            },
+                              style: {
+                                  fontSize: '14px',
+                                  fontWeight: 'bold',
+                                  colors: ['#000']  // Color negro para los totales
+                              }
+                          }
+                      }
+                  }
+              },
+              dataLabels: {
+                  enabled: false  // Desactiva los números en cada barra individual
+              },
+                colors: data.datasets.map(ds => ds.backgroundColor), // 📌 Colores dinámicos
+                xaxis: {
+                  categories: data.labels.map(dateStr => {
+                    const [year, month, day] = dateStr.split('-');
+                    const date = new Date(Number(year), Number(month) - 1, Number(day));
+
+                    const diaSemana = date.toLocaleDateString('es', { weekday: 'short' }); // dom.
+                    const mes = date.toLocaleDateString('es', { month: 'short' }); // mar.
+                    const dia = day.padStart(2, '0'); // 02
+
+                    return `${diaSemana}., ${mes}. ${dia}`;
+                }),
+              },
+                yaxis: {
+                  labels: {
+                      formatter: function (value) {
+                          return value.toFixed(2); // 📌 Redondear valores en el eje Y
+                      }
+                  }
+              },
+                legend: {
+                    position: 'right', // 📌 Mueve la leyenda a la derecha
+                    offsetY: 40
+                },
+                tooltip: {
+                  enabled: true,
+                  shared: false, // 🔥 Evita mostrar varios valores en un solo tooltip
+                  custom: function({ seriesIndex, dataPointIndex, w }) {
+                    let tiempoTexto = w.config.series[seriesIndex].data_label?.[dataPointIndex] ?? "0:00";
+                    let color = w.config.colors[seriesIndex]; // Obtiene el color de la serie
+
+                      return `<div style="display: flex; align-items: center; padding: 5px;">
+                          <span style="width: 12px; height: 12px; border-radius: 50%; background-color: ${color}; display: inline-block; margin-right: 5px;"></span>
+                          <span>${w.globals.seriesNames[seriesIndex]}: ${tiempoTexto}</span>
+                      </div>`;
+                  }
+              }
+            };
+            if (window.chartInstance) {
+                window.chartInstance.destroy();
+            }
+            window.chartInstance = new ApexCharts(document.querySelector("#chart"), options);
+            window.chartInstance.render();
+        },
+        error: function (xhr, status, error) {
+            console.error("Error al obtener datos del gráfico:", error);
+        }
+    });
+  }
+</script>
+{% endblock %}

@@ -1,0 +1,246 @@
+{% extends 'base.html' %}
+{% block title %}Tareas{% endblock title %}
+{% block vendor_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
+{% endblock vendor_css %}
+{% block vendor_js %}
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+{% endblock vendor_js %}
+{% block content %}
+<div class="row">
+  <div class="col-12">
+    <div class="page-title-box">
+      <h4 class="page-title">
+        Tareas
+        <a href="#" data-bs-toggle="modal" data-bs-target="#add" class="btn btn-success btn-sm ms-3">
+          Añadir Compromiso
+        </a>
+      </h4>
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-md-12">
+    <div class="card">
+      <div class="card-body">
+        <!-- FILTROS -->
+        <div class="row mb-3">
+          <div class="col-md-3">
+            <label for="estado-filter" class="form-label">Filtrar por Estado</label>
+            <select id="estado-filter" class="form-select form-select-sm">
+              <option value="">Todos</option>
+              <option value="todo">Por Hacer</option>
+              <option value="in_progress">En Progreso</option>
+              <option value="review">En Revisión</option>
+              <option value="done">Hecho</option>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label for="responsable-filter" class="form-label">Filtrar por Responsable</label>
+            <select id="responsable-filter" class="form-select form-select-sm">
+              <option value="">Todos</option>
+              {% for user in users %}
+              <option value="{{ user.id }}">{{ user.get_full_name|default:user.username }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label for="vencimiento-filter" class="form-label">Filtrar por Vencimiento</label>
+            <input type="text" id="vencimiento-filter" class="form-control form-control-sm"
+              placeholder="Seleccionar rango de fechas" />
+          </div>
+          <div class="col-md-3">
+            <label for="ordering-filter" class="form-label">Ordenar por</label>
+            <select id="ordering-filter" class="form-select form-select-sm">
+              <option value="">Por defecto (reciente)</option>
+              <option value="titulo_asc">Título (A-Z)</option>
+              <option value="titulo_desc">Título (Z-A)</option>
+              <option value="vencimiento_asc">Vencimiento (próximos)</option>
+              <option value="vencimiento_desc">Vencimiento (últimos)</option>
+              <option value="duracion_asc">Tiempo (menor a mayor)</option>
+              <option value="duracion_desc">Tiempo (mayor a menor)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- TABLA -->
+        <table class="table table-sm table-hover w-100" id="table">
+          <thead>
+            <tr>
+              <th>Estado</th>
+              <th>OT</th>
+              <th>Título</th>
+              <th>Vencimiento</th>
+              <th>Tiempo estimado</th>
+              <th>Responsable</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% include 'partials/kanban_add.html' %}
+{% include 'partials/_offcanvas/kanban_edit.html' %}
+{% endblock %}
+{% block scripts %}
+<script>
+  const estadoMap = {
+    todo: { text: "Por Hacer", color: "secondary" },
+    in_progress: { text: "En Progreso", color: "primary" },
+    review: { text: "En Revisión", color: "warning" },
+    done: { text: "Hecho", color: "success" },
+  };
+
+  const csrfToken = document.querySelector("[name=csrfmiddlewaretoken]").value;
+
+  $(document).ready(function () {
+    // Inicializar calendario
+    flatpickr("#vencimiento-filter", {
+      mode: "range",
+      dateFormat: "Y-m-d",
+      locale: {
+        firstDayOfWeek: 1,
+        weekdays: {
+          shorthand: ["Do", "Lu", "Ma", "Mi", "Ju", "Vi", "Sa"],
+          longhand: ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"],
+        },
+        months: {
+          shorthand: ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"],
+          longhand: ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"],
+        },
+      },
+    });
+
+    // Inicializar DataTable
+    const table = $("#table").DataTable({
+      language: {
+        url: "https://cdn.datatables.net/plug-ins/2.2.1/i18n/es-MX.json",
+      },
+      pageLength: 50,
+      order: [[3, "desc"]],
+      processing: true,
+      serverSide: true,
+      rowId: "id",
+      ajax: {
+        url: "{% url 'tarea-datatables' %}",
+        data: function (d) {
+          d.estado = $("#estado-filter").val();
+          d.responsable = $("#responsable-filter").val();
+          d.vencimiento = $("#vencimiento-filter").val();
+          d.ordering = $("#ordering-filter").val();
+        },
+      },
+      columns: [
+        {
+          data: "estado",
+          render: function (data) {
+            const estado = estadoMap[data] || estadoMap["todo"];
+            return `
+              <div class="dropdown">
+                <button class="badge bg-${estado.color} dropdown-toggle hide-arrow border-0" 
+                        type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                  ${estado.text}
+                </button>
+                <div class="dropdown-menu" id="drpEdit">
+                  <a class="dropdown-item" href="#" data-estado="todo"><span class="badge bg-secondary">Por Hacer</span></a>
+                  <a class="dropdown-item" href="#" data-estado="in_progress"><span class="badge bg-primary">En Progreso</span></a>
+                  <a class="dropdown-item" href="#" data-estado="review"><span class="badge bg-warning">En Revisión</span></a>
+                  <a class="dropdown-item" href="#" data-estado="done"><span class="badge bg-success">Hecho</span></a>
+                </div>
+              </div>`;
+          },
+        },
+        { data: "ot_str" },
+        { data: "titulo" },
+        {
+          data: "vencimiento",
+          render: function (data) {
+            return data ? moment(data).format("DD/MM/YY") : "";
+          },
+        },
+        { data: "duracion" },
+        { data: "user_name" },
+        {
+          data: null,
+          orderable: false,
+          defaultContent: `
+            <div class="dropdown card-widgets">
+              <a href="#" class="dropdown-toggle arrow-none" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="uil uil-ellipsis-h"></i>
+              </a>
+              <div class="dropdown-menu dropdown-menu-end">
+                <a class="dropdown-item edit" data-bs-toggle="offcanvas" href="#offcanvas" role="button" aria-controls="offcanvas">
+                  <i class="uil uil-edit me-1"></i>Editar
+                </a>
+                <a href="javascript:void(0);" class="dropdown-item text-danger delete">
+                  <i class="uil uil-trash-alt me-1"></i>Eliminar
+                </a>
+              </div>
+            </div>`,
+        },
+      ],
+    });
+
+    // Filtros
+    $("#estado-filter, #responsable-filter, #vencimiento-filter, #ordering-filter").on("change", function () {
+      table.ajax.reload();
+    });
+
+    // EDITAR tarea
+    let currentTaskId = null;
+    $(document).on("click", ".edit", function () {
+      currentTaskId = $(this).closest("tr").attr("id");
+      $.get(`../api/tarea/${currentTaskId}/`, function (data) {
+        $('#offcanvas input[name="titulo"]').val(data.titulo);
+        $('#offcanvas textarea[name="descripcion"]').val(data.descripcion);
+        $('#offcanvas select[name="user"]').val(data.user);
+        $('#offcanvas input[id="creacion"]').val(moment(data.creado).format("YYYY-MM-DD"));
+        $('#offcanvas input[name="vencimiento"]').val(moment(data.vencimiento).format("YYYY-MM-DD"));
+        $('#offcanvas input[name="duracion"]').val(data.duracion);
+      });
+    });
+
+    // Cambiar estado
+    $("#table").on("click", "#drpEdit .dropdown-item", function (e) {
+      e.preventDefault();
+      const id = $(this).closest("tr").attr("id");
+      const nuevoEstado = $(this).data("estado");
+      $.ajax({
+        type: "PATCH",
+        url: `../api/tarea/${id}/`,
+        headers: { "X-CSRFToken": csrfToken },
+        contentType: "application/json",
+        data: JSON.stringify({ estado: nuevoEstado }),
+        success: function () {
+          $.NotificationApp.send("¡Bien hecho!", "Estado actualizado con éxito", "bottom-right", "rgba(0,0,0,0.2)", "success");
+          table.ajax.reload(null, false);
+        },
+        error: function () {
+          $.NotificationApp.send("¡Error!", "No se pudo actualizar el estado", "bottom-right", "rgba(0,0,0,0.2)", "danger");
+        },
+      });
+    });
+
+    // Eliminar tarea
+    $(document).on("click", ".delete", function () {
+      const tareaId = $(this).closest("tr").attr("id");
+      if (confirm("¿Seguro que deseas eliminar esta tarea?")) {
+        $.ajax({
+          url: "../api/tarea/" + tareaId + "/",
+          type: "DELETE",
+          headers: { "X-CSRFToken": csrfToken },
+          success: function () {
+            $.NotificationApp.send("¡Eliminado!", "Tarea eliminada con éxito", "bottom-right", "rgba(0,0,0,0.2)", "success");
+            table.ajax.reload();
+          },
+        });
+      }
+    });
+  });
+</script>
+{% endblock %}

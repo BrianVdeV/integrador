@@ -1,0 +1,449 @@
+{% extends 'base.html' %}{% load static %} {% block title %}Kanban{% endblock title %} {% block vendor_js %}
+<script src="{% static 'vendor/dragula/dragula.min.js'%}"></script>
+<script src="{% static 'js/ui/component.dragula.js'%}"></script>
+<script src="{% static 'vendor/jquery-mask-plugin/jquery.mask.min.js' %}"></script>
+{% endblock vendor_js %} {% block content %}
+
+<!-- start page title -->
+<div class="row">
+  <div class="col-12">
+    <div class="page-title-box">
+      <h4 class="page-title">
+        Procesos del dia {% if user.is_superuser %}
+        <a href="#" data-bs-toggle="modal" data-bs-target="#add" class="btn btn-success btn-sm ms-3"> Añadir Compromiso </a>
+        {% endif %}
+      </h4>
+    </div>
+  </div>
+</div>
+<!-- end page title -->
+{% if request.user.is_superuser %}
+<div class="row filter">
+  <div class="col-auto">
+    <div class="mb-3">{{form.user}}</div>
+  </div>
+  <div class="col-6">
+    <div class="mb-3">{{form.ot}}</div>
+  </div>
+  <div class="col-auto">
+    <div class="mb-3">
+      <select class="form-select" id="sltVencimientoRango">
+        <option value="">Cualquier fecha</option>
+        <option value="today">Hoy</option>
+        <option value="pastweek" selected>Semana anterior</option>
+        <option value="thisweek">Semana actual</option>
+        <option value="thismonth">Mes actual</option>
+        <option value="thisyear">Año corriente</option>
+      </select>
+    </div>
+  </div>
+</div>
+{% endif %}
+<div class="row">
+  <div class="col-12">
+    <div class="board">
+      <div class="tasks">
+        <h5 class="mt-0 task-header text-white bg-danger">POR HACER</h5>
+        <div id="task-list-one" class="task-list-items"></div>
+      </div>
+      <div class="tasks">
+        <h5 class="mt-0 task-header text-white bg-warning">EN PROGRESO</h5>
+        <div id="task-list-two" class="task-list-items"></div>
+      </div>
+      <div class="tasks">
+        <h5 class="mt-0 task-header text-white bg-info">EN REVISIÓN</h5>
+        <div id="task-list-three" class="task-list-items"></div>
+      </div>
+      <div class="tasks">
+        <h5 class="mt-0 task-header text-white bg-success">HECHO</h5>
+        <div id="task-list-four" class="task-list-items"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add new task modal -->
+{% include 'partials/kanban_add.html' %}{% include 'partials/_offcanvas/kanban_edit.html' %}{% endblock %} {% block scripts %}
+<script>
+  const borderColorMap = {
+    todo: "danger",
+    in_progress: "warning",
+    review: "info",
+    done: "success",
+  };
+  $(document).on("change", ".filter #sltUsuario", function () {
+    loadTasks();
+  });
+  $(document).on("change", ".filter #sltOt", function () {
+    loadTasks();
+  });
+  $(document).on("change", ".filter #sltVencimientoRango", function () {
+    loadTasks();
+  });
+
+  // --- FUNCIÓN MODIFICADA ---
+  function loadTasks() {
+    const userId = $(".filter #sltUsuario").val();
+    const otId = $(".filter #sltOt").val();
+    const vencimientoRango = $(".filter #sltVencimientoRango").val();
+    let url = URL;
+    let params = [];
+    if (userId) {
+      params.push("user=" + userId);
+    }
+    if (otId) {
+      params.push("ot=" + otId);
+    }
+    if (vencimientoRango) {
+      params.push("vencimiento_rango=" + vencimientoRango);
+    }
+    if (params.length > 0) {
+      url += "?" + params.join("&");
+    }
+    console.log("URL de la API:", url);
+    $.get(url, function (data) {
+      let tareas = data.results || data;
+      $("#task-list-one, #task-list-two, #task-list-three, #task-list-four").empty();
+      tareas.forEach((tarea) => {
+        // --- INICIO DEL CAMBIO ---
+        // 1. Tomamos la fecha de vencimiento y la formateamos a "Día/Mes/Año"
+        // Si no hay fecha, mostramos "--"
+        let vencimientoFormateado = tarea.vencimiento ? moment(tarea.vencimiento).format("DD/MM/YY") : "--";
+        // --- FIN DEL CAMBIO ---
+
+        let borderColor = borderColorMap[tarea.estado] || "secondary";
+        let taskElement = `
+          <div class="card border-start border-4 border-${borderColor}" data-task-id="${
+          tarea.id
+        }" data-bs-toggle="offcanvas" href="#offcanvas" role="button" aria-controls="offcanvas">
+              <div class="card-body p-3">
+                  <h5 class="mt-2 mb-2">${tarea.titulo}</h5>
+                  <p class="text-muted small">${tarea.ot_str}</p>
+                  <div class="float-end">
+                      ${vencimientoFormateado}
+                  </div>
+                  <p class="mb-0">
+                      <img src="{% static "images/avatar-1.svg" %}" alt="user-img" class="avatar-xs rounded-circle me-1" />
+                      <span class="align-middle">${tarea.user_name}</span>
+                  </p>
+              </div>
+          </div>`;
+
+        if (tarea.estado === "todo") {
+          $("#task-list-one").append(taskElement);
+        } else if (tarea.estado === "in_progress") {
+          $("#task-list-two").append(taskElement);
+        } else if (tarea.estado === "review") {
+          $("#task-list-three").append(taskElement);
+        } else if (tarea.estado === "done") {
+          $("#task-list-four").append(taskElement);
+        }
+      });
+    });
+  }
+
+  function initDragulaForSuperUser() {
+    var drake = dragula(
+      [
+        document.getElementById("task-list-one"),
+        document.getElementById("task-list-two"),
+        document.getElementById("task-list-three"),
+        document.getElementById("task-list-four"),
+      ],
+      {
+        revertOnSpill: true,
+      }
+    );
+
+    handleDragulaEvents(drake);
+  }
+
+  function initDragulaForRegularUser() {
+    var drake = dragula(
+      [document.getElementById("task-list-one"), document.getElementById("task-list-two"), document.getElementById("task-list-three")],
+      {
+        revertOnSpill: true,
+        accepts: function (el, target, source) {
+          if (target.id === "task-list-one") {
+            return false;
+          }
+          return target !== source;
+        },
+        moves: function (el, container, handle) {
+          return true;
+        },
+      }
+    );
+    handleDragulaEvents(drake);
+  }
+
+  function getEstadoFromContainer(containerId) {
+    return containerId === "task-list-one"
+      ? "todo"
+      : containerId === "task-list-two"
+      ? "in_progress"
+      : containerId === "task-list-three"
+      ? "review"
+      : "done";
+  }
+
+  function handleDragulaEvents(drake) {
+    drake.on("drop", function (el, target, source, sibling) {
+      const cards = $(target).children(".card");
+      let newStatus =
+        target.id === "task-list-one"
+          ? "todo"
+          : target.id === "task-list-two"
+          ? "in_progress"
+          : target.id === "task-list-three"
+          ? "review"
+          : "done";
+      el.classList.remove("border-danger", "border-info", "border-warning", "border-success");
+      // Luego añade la nueva clase de borde
+      el.classList.add(`border-${borderColorMap[newStatus]}`);
+      cards.each(function (index) {
+        const taskId = $(this).data("task-id");
+        $.ajax({
+          url: `../api/tarea/${taskId}/`,
+          type: "PATCH",
+          contentType: "application/json",
+          headers: {
+            "X-CSRFToken": "{{ csrf_token }}",
+          },
+          data: JSON.stringify({
+            estado: getEstadoFromContainer(target.id),
+            orden: index,
+          }),
+          success: function () {
+            $.NotificationApp.send("¡Bien Hecho!", "Tarea actualizada con exito", "bottom-right", "rgba(0,0,0,0.2)", "success");
+          },
+          error: function (xhr) {
+            $.NotificationApp.send("¡Error!", xhr.statusText, "bottom-right", "rgba(0,0,0,0.2)", "error");
+          },
+        });
+      });
+    });
+  }
+
+  $(document).ready(function () {
+    // Cargar tareas en el tablero
+    {% if request.user.is_superuser %}
+      initDragulaForSuperUser();
+      URL = "../api/kanban/";
+      // Descripción
+      $('#offcanvas input[name="titulo"]').on("change", function () {
+        actualizarTarea({ titulo: $(this).val() });
+      });
+      $('#offcanvas textarea[name="descripcion"]').on("change", function () {
+        actualizarTarea({ descripcion: $(this).val() });
+      });
+
+      // Usuario
+      $('#offcanvas select[name="user"]').on("change", function () {
+        actualizarTarea({ user: $(this).val() });
+      });
+
+      // Vencimiento
+      $('#offcanvas input[name="vencimiento"]').on("change", function () {
+        actualizarTarea({ vencimiento: $(this).val() });
+      });
+      // Prioridad
+      $('#offcanvas select[name="prioridad"]').on("change", function () {
+        actualizarTarea({ prioridad: $(this).val() });
+      });
+      $('#offcanvas input[name="duracion"]').on("change", function () {
+        actualizarTarea({ duracion_input: $(this).val() });
+      });
+    {% else %}
+      initDragulaForRegularUser();
+      URL = "../api/kanban/mi-kanban/";
+    {% endif %}
+    loadTasks();
+  });
+
+  let currentTaskId = null;
+
+  // ESTA ES LA FUNCIÓN QUE SE EJECUTA AL ABRIR EL MODAL
+  $(document).on("click", ".card[data-task-id]", function () {
+    currentTaskId = $(this).data("task-id");
+    $("#form-editar-tarea").attr("data-task-id", currentTaskId);
+
+    // Reseteamos el campo mientras carga
+    $("#tiempo-registrado-display").text("Calculando...");
+
+    // Hacemos UNA SOLA llamada para traer los datos de la tarea
+    $.get(`../api/tarea/${currentTaskId}/`, function (data) {
+      // Llenamos todos los campos del formulario
+      $('input[name="titulo"]').val(data.titulo);
+      $('textarea[name="descripcion"]').val(data.descripcion);
+      $('#offcanvas select[name="user"]').val(data.user);
+      $('input[id="creacion"]').val(moment(data.creado).format("YYYY-MM-DD"));
+      $('input[name="vencimiento"]').val(moment(data.vencimiento).format("YYYY-MM-DD"));
+      $('#offcanvas select[name="prioridad"]').val(data.prioridad);
+      $('input[name="duracion"]').val(data.duracion);
+
+      // *** AQUÍ ESTÁ LA CORRECCIÓN ***
+      // Ponemos el tiempo de "horas_trabajadas" de ESA tarea en el <p>
+      // Si no hay tiempo, muestra "00:00"
+      $("#tiempo-registrado-display").text(data.horas_trabajadas || "00:00");
+
+      // (Tu código original tenía esto, lo cual es incorrecto para un <p>)
+      // $('input[id="registrado"]').val(data.horas_trabajadas);
+    });
+  });
+
+  function actualizarTarea(data) {
+    $.ajax({
+      url: `../api/tarea/${currentTaskId}/`,
+      type: "PATCH",
+      contentType: "application/json",
+      headers: {
+        "X-CSRFToken": "{{ csrf_token }}",
+      },
+      data: JSON.stringify(data),
+      success: function () {
+        loadTasks();
+        $.NotificationApp.send("¡Bien Hecho!", "Tarea actualizada con exito", "bottom-right", "rgba(0,0,0,0.2)", "success");
+      },
+      error: function (xhr) {
+        $.NotificationApp.send("¡Error!", xhr.statusText, "bottom-right", "rgba(0,0,0,0.2)", "error");
+      },
+    });
+  }
+
+  $(document).on("submit", "#frmAdd", function (e) {
+    e.preventDefault();
+    const formData = {};
+    const titulo = $('#add input[name="titulo"]').val();
+    if (!titulo || titulo.trim() === "") {
+      $.NotificationApp.send("¡Error!", "El título es obligatorio", "bottom-right", "rgba(0,0,0,0.2)", "error");
+      return;
+    }
+    formData.titulo = titulo;
+
+    const descripcion = $('#add textarea[name="descripcion"]').val();
+    if (descripcion && descripcion.trim() !== "") {
+      formData.descripcion = descripcion;
+    }
+
+    const ot = $('#add select[name="ot"]').val();
+    if (ot) {
+      formData.ot = ot;
+    }
+
+    // Usuario
+    const user = $('#add select[name="user"]').val();
+    if (user) {
+      formData.user = user;
+    }
+
+    // Vencimiento
+    const vencimiento = $('#add input[name="vencimiento"]').val();
+    if (vencimiento) {
+      formData.vencimiento = vencimiento;
+    }
+
+    // ⭐ DURACIÓN - El campo más importante
+    const duracion = $('#add input[name="duracion"]').val();
+    if (duracion && duracion.trim() !== "" && duracion !== "__:__") {
+      formData.duracion_input = duracion;
+    }
+
+    // Prioridad - Solo si existe en el formulario
+    const prioridad = $('#add select[name="prioridad"]').val();
+    if (prioridad) {
+      formData.prioridad = prioridad;
+    }
+
+    // Estado inicial
+    formData.estado = "todo";
+
+    console.log("📤 Datos a enviar:", formData);
+
+    $.ajax({
+      url: `../api/tarea/`,
+      method: "POST",
+      contentType: "application/json",
+      headers: {
+        "X-CSRFToken": "{{ csrf_token }}",
+      },
+      data: JSON.stringify(formData),
+      success: function (res) {
+        console.log("✅ Respuesta exitosa:", res);
+        $("#add").modal("hide");
+        $("#frmAdd")[0].reset();
+        loadTasks();
+        $.NotificationApp.send("¡Bien Hecho!", "Tarea creada con éxito", "bottom-right", "rgba(0,0,0,0.2)", "success");
+      },
+      error: function (xhr) {
+        console.error("❌ Error completo:", xhr);
+        console.error("📄 Response JSON:", xhr.responseJSON);
+        console.error("📝 Response Text:", xhr.responseText);
+
+        let errorMsg = "Error al crear la tarea";
+
+        if (xhr.responseJSON) {
+          // Construir mensaje de error legible
+          const errors = xhr.responseJSON;
+          const errorList = [];
+
+          for (let field in errors) {
+            if (Array.isArray(errors[field])) {
+              errorList.push(`${field}: ${errors[field].join(", ")}`);
+            } else {
+              errorList.push(`${field}: ${errors[field]}`);
+            }
+          }
+
+          errorMsg = errorList.join("\n") || JSON.stringify(errors);
+        } else if (xhr.responseText) {
+          errorMsg = xhr.responseText;
+        }
+
+        alert("Error al crear la tarea:\n\n" + errorMsg);
+
+        $.NotificationApp.send(
+          "¡Error!",
+          "No se pudo crear la tarea. Ver consola para detalles.",
+          "bottom-right",
+          "rgba(0,0,0,0.2)",
+          "error"
+        );
+      },
+    });
+  });
+  $(document).ready(function() {
+    $('#sltOt').select2();
+  });
+  $(document).on("click", "#btnIniciarKanban", function() {
+    if (!currentTaskId) {
+      $.NotificationApp.send("¡Error!", "No se pudo identificar la tarea.", "bottom-right", "rgba(0,0,0,0.2)", "error");
+      return;
+    }
+
+    const $btn = $(this);
+    $btn.prop("disabled", true).text("Iniciando..."); // Deshabilitar botón
+
+    $.ajax({
+      url: `../api/tarea/${currentTaskId}/iniciar/`, // CORREGIDO: "area" en lugar de "tarea"
+      type: "POST",
+      headers: {
+        "X-CSRFToken": "{{ csrf_token }}", // Token de seguridad de Django
+      },
+      contentType: "application/json",
+      success: function(data) {
+        // ¡Éxito! Redirigir al index.
+        // El index.html al cargar buscará la actividad activa y mostrará el cronómetro.
+        window.location.href = "{% url 'index' %}";
+      },
+      error: function(xhr) {
+        // Si falla, reactivar el botón y mostrar error
+        $btn.prop("disabled", false).text("Iniciar actividad");
+        let errorMsg = xhr.responseJSON ? xhr.responseJSON.error : "Error desconocido.";
+        $.NotificationApp.send("¡Error!", errorMsg, "bottom-right", "rgba(0,0,0,0.2)", "error");
+        console.error("Error al iniciar tarea:", xhr.responseText);
+      },
+    });
+  });
+</script>
+{% endblock %}

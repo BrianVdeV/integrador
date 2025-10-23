@@ -1,0 +1,266 @@
+{% extends 'base.html' %}{% load static %} {% block title %}Dashboard{% endblock title %}{% block content %}
+<div class="row">
+  <div class="col-12">
+    <div class="page-title-box">
+      <h4 class="page-title">Tablero</h4>
+    </div>
+  </div>
+</div>
+<div class="row">
+  <div class="col-12">
+    <div class="card widget-inline">
+      <div class="card-body p-0">
+        <div class="row g-0">
+          <div class="col-sm-6 col-lg-3">
+            <div class="card rounded-0 shadow-none m-0">
+              <div class="card-body text-center">
+                <i class="ri-briefcase-line text-muted font-24"></i>
+                <h3><span>{{ total_projects }}</span></h3>
+                <!-- Total Projects -->
+                <p class="text-muted font-15 mb-0">Total OTs Activas</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-sm-6 col-lg-3">
+            <div class="card rounded-0 shadow-none m-0 border-start border-light">
+              <div class="card-body text-center">
+                <i class="ri-list-check-2 text-muted font-24"></i>
+                <h3><span>{{ total_tasks }}</span></h3>
+                <!-- Total de OTs trabajadas hoy -->
+                <p class="text-muted font-15 mb-0">OTs trabajadas hoy</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-sm-6 col-lg-3">
+            <div class="card rounded-0 shadow-none m-0 border-start border-light">
+              <div class="card-body text-center">
+                <i class="ri-group-line text-muted font-24"></i>
+                <h3><span>{{ total_members }}</span></h3>
+                <!-- Total Members -->
+                <p class="text-muted font-15 mb-0">Miembros Activos</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-sm-6 col-lg-3">
+            <div class="card rounded-0 shadow-none m-0 border-start border-light">
+              <div class="card-body text-center">
+                <i class="ri-pie-chart-line text-muted font-24"></i>
+                <h3><span>{{ total_productivity }}</span></h3>
+                <!-- Total Productivity (hours) -->
+                <p class="text-muted font-15 mb-0">Horas trabajadas(por dia)</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- end row -->
+      </div>
+    </div>
+    <!-- end card-box-->
+  </div>
+  <!-- end col-->
+</div>
+
+<div class="row">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-body">
+        <h5 class="card-title">Actividades del equipo</h5>
+        <table id="table" class="table dt-responsive nowrap w-100">
+          <thead>
+            <tr>
+              <th>Miembro del Equipo</th>
+              <th>Última Actividad</th>
+              <th>Estado</th>
+              <th>Tiempo</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %} {% block scripts %}
+<script>
+  // Función para actualizar los cronómetros en tiempo real
+  function actualizarCronometros() {
+    $(".cronometro-dashboard").each(function () {
+      let horaInicial = $(this).data("hora-inicial");
+      if (!horaInicial) return;
+
+      let inicio = new Date(horaInicial);
+      let ahora = new Date();
+      let diferencia = Math.floor((ahora - inicio) / 1000);
+
+      let horas = Math.floor(diferencia / 3600);
+      let minutos = Math.floor((diferencia % 3600) / 60);
+      let segundos = diferencia % 60;
+
+      let formatoTiempo = (horas < 10 ? "0" + horas : horas) + ":" + (minutos < 10 ? "0" + minutos : minutos) + ":" + (segundos < 10 ? "0" + segundos : segundos);
+
+      $(this).text(formatoTiempo);
+    });
+  }
+
+  $(document).ready(function () {
+    $("#table").DataTable({
+      processing: true,
+      ajax: {
+        url: "{% url 'actividades-dashboard-actividad' %}",
+        type: "GET",
+        dataSrc: "",
+      },
+      columns: [
+        {
+          data: "user",
+          width: "20%",
+        },
+        {
+          data: null,
+          width: "40%",
+          render: function (data) {
+            // Crear tooltip con información completa - PLACEMENT BOTTOM
+            return (
+              '<div class="actividad-info" ' +
+              'data-bs-toggle="tooltip" ' +
+              'data-bs-placement="bottom" ' +
+              'data-bs-html="true" ' +
+              'title="' +
+              "<strong>Tarea:</strong> " +
+              data.tarea_completa +
+              "<br>" +
+              "<strong>OT:</strong> " +
+              data.ot_completa +
+              "<br>" +
+              "<strong>Comentario:</strong> " +
+              data.comentario_completo +
+              '">' +
+              "<h5 class='font-14 my-1 fw-normal'>" +
+              data.tarea +
+              data.comentario +
+              "</h5> <span class='text-muted font-13'>" +
+              data.ot +
+              "</span>" +
+              "</div>"
+            );
+          },
+        },
+        {
+          data: null,
+          width: "15%",
+          render: function (data) {
+            if (data.en_actividad) {
+              return '<span class="badge bg-success">EN ACTIVIDAD</span>';
+            } else {
+              return '<span class="badge bg-secondary">Finalizada</span>';
+            }
+          },
+        },
+        {
+          data: null,
+          width: "25%",
+          render: function (data) {
+            if (data.en_actividad) {
+              // Actividad en curso - mostrar cronómetro en tiempo real + fecha de hoy
+              return (
+                '<span class="cronometro-dashboard text-primary fw-bold" ' +
+                'data-hora-inicial="' +
+                data.inicio_completo +
+                '">' +
+                "00:00:00</span><br>" +
+                '<small class="text-muted">Inicio: ' +
+                data.inicio +
+                "</small><br>" +
+                '<small class="text-success"><i class="ri-calendar-line"></i> ' +
+                data.fecha_actividad +
+                " (Hoy)</small>"
+              );
+            } else {
+              // Actividad finalizada - mostrar tiempo total que duró + fecha de término
+              return (
+                '<span class="text-dark fw-bold">' +
+                (data.tiempo_actividad || "00:00:00") +
+                "</span><br>" +
+                '<small class="text-muted">Inicio: ' +
+                data.inicio +
+                "</small><br>" +
+                '<small class="text-secondary"><i class="ri-calendar-check-line"></i> ' +
+                data.fecha_actividad +
+                "</small>"
+              );
+            }
+          },
+        },
+      ],
+      order: [[0, "asc"]],
+      pageLength: 25,
+      language: {
+        url: "https://cdn.datatables.net/plug-ins/2.2.1/i18n/es-MX.json",
+        processing: "Cargando actividades...",
+      },
+      initComplete: function () {
+        // Iniciar actualización de cronómetros
+        actualizarCronometros();
+        setInterval(actualizarCronometros, 1000);
+
+        // Inicializar tooltips de Bootstrap
+        initializeTooltips();
+      },
+      drawCallback: function () {
+        // Reinicializar tooltips después de cada redibujado de la tabla
+        initializeTooltips();
+      },
+    });
+  });
+
+  // Función para inicializar tooltips
+  function initializeTooltips() {
+    // Destruir tooltips existentes primero
+    $('[data-bs-toggle="tooltip"]').tooltip("dispose");
+
+    // Inicializar nuevos tooltips - PLACEMENT BOTTOM
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+      return new bootstrap.Tooltip(tooltipTriggerEl, {
+        html: true,
+        trigger: "hover",
+        container: "body",
+        placement: "bottom", // ← FORZAR ABAJO
+      });
+    });
+  }
+</script>
+
+<style>
+  .cronometro-dashboard {
+    font-size: 1.1em;
+    font-family: "Courier New", monospace;
+  }
+
+  /* Estilo para indicar que hay tooltip */
+  .actividad-info {
+    cursor: help;
+    position: relative;
+  }
+
+  .actividad-info:hover {
+    opacity: 0.9;
+  }
+
+  /* Estilos para el tooltip */
+  .tooltip-inner {
+    max-width: 400px;
+    text-align: left;
+    padding: 10px 15px;
+  }
+
+  /* Asegurar que el tooltip aparezca abajo */
+  .tooltip.bs-tooltip-bottom {
+    margin-top: 5px;
+  }
+</style>
+{% endblock %}

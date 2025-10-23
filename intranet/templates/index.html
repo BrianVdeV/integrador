@@ -1,0 +1,904 @@
+{% extends 'base.html' %}{% load static %}
+{% block vendor_css %}
+
+<link href="https://cdn.datatables.net/rowgroup/1.5.1/css/rowGroup.bootstrap5.min.css" rel="stylesheet" integrity="sha384-Rj6fkZegbvuzZ6XuR6+R7a5orEwiiWM1rlq7854UVoNPRoYhPH9hOzCYeIppf4qw" crossorigin="anonymous"/>
+<!-- Shepherd.js CSS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/shepherd.js@11.2.0/dist/css/shepherd.css"/>
+
+<!-- Tippy.js CSS -->
+<link rel="stylesheet" href="https://unpkg.com/tippy.js@6/dist/tippy.css" />
+<link rel="stylesheet" href="https://unpkg.com/tippy.js@6/themes/light.css" />
+<link rel="stylesheet" href="https://unpkg.com/tippy.js@6/themes/material.css" />
+{% endblock vendor_css %}
+{% block vendor_js %}
+<script
+  src="https://cdn.datatables.net/rowgroup/1.5.1/js/dataTables.rowGroup.min.js"
+  integrity="sha384-T3BVwaNY2bpNuIPnMFf2CxjIZZAkCXv6+GxwAs50oId58u5/TIAvrY1eR3+aAHjH"
+  crossorigin="anonymous"
+></script>
+<script src="https://cdn.datatables.net/plug-ins/2.2.2/dataRender/datetime.js"></script>
+<!-- Shepherd.js Library -->
+<script src="https://cdn.jsdelivr.net/npm/shepherd.js@11.2.0/dist/js/shepherd.min.js"></script>
+
+<!-- Tippy.js Library -->
+<script src="https://unpkg.com/@popperjs/core@2"></script>
+<script src="https://unpkg.com/tippy.js@6"></script>
+
+{% endblock vendor_js %}
+{% block content %}
+
+
+
+<!-- start page title -->
+<div class="row">
+  <div class="col-12">
+    <div class="page-title-box d-flex justify-content-between align-items-center">
+      <h4 class="page-title">Ingresar Actividades</h4>
+      <!-- Botón de Ayuda -->
+      <button type="button" id="btnAyudaInicio" class="btn btn-info btn-sm">
+        <i class="mdi mdi-help-circle me-1"></i> Ayuda
+      </button>
+    </div>
+  </div>
+</div>
+<!-- end page title -->
+
+<div class="row">
+  <div class="col-lg-12">
+    <div class="card mb-4 shadow {% if tracker %}ribbon-box{% endif %}">
+      <div class="card-body">
+        {% if tracker and ribbon %}
+        <div class="ribbon-two ribbon-two-secondary">
+          <span id="ribbonSpan">{{ribbon.est_exp}}</span>
+        </div>
+        {% endif %}
+        
+        <!-- Cronómetro (solo visible cuando hay actividad activa) -->
+        {% if tracker %}
+        <div class="row mb-3">
+          <div class="col-md-12 text-center">
+            <div class="alert alert-info">
+              <h5 class="mb-2">Actividad en Curso: {{ tracker.ot }}: {{ tracker.tarea }}</h5>
+              <h3><span id="cronometro" class="cronometro" data-hora-inicial="{{ tracker.inicio|date:'Y-m-d H:i:s' }}">00:00:00</span></h3>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+
+        <form class="ingreso" id="frmIngActividad" method="post" action="{% if tracker %}{% url 'end_actividad' %}{% else %}#{% endif %}">
+          {% csrf_token %}
+          {% if tracker %}
+            <input type="hidden" id="txtID" name="id" value="{{ tracker.id }}" />
+          {% else %}
+            <input type="hidden" id="id_col" name="id_col" value="{{user.id}}" />
+          {% endif %}
+          
+          <div class="row">
+            <div class="col-md-4">
+              <label for="sltOT" class="form-label">OT</label>
+              {% if tracker %}
+                <input type="text" class="form-control" value="{{ tracker.ot }}: {{ tracker.tarea }}" readonly />
+              {% else %}
+                {{form.ot}}
+              {% endif %}
+            </div>
+            
+            {% if not tracker %}
+            <div class="col-md-2">
+              <label for="sltTarea" class="form-label">Tarea</label>
+              {{form.tarea}}
+            </div>
+            {% endif %}
+            
+            <div class="col-md-{% if tracker %}6{% else %}4{% endif %}">
+                <label for="txtActividades" class="form-label">{% if tracker %}Anotaciones, Descripcion, Consideraciones Puntuales de Relevancia
+                  <span id="saveStatus" class="ms-2 small"></span>
+                {% else %}Anotaciones, Descripcion, Consideraciones{% endif %}</label>
+              <input type="text" class="form-control" 
+                     id="{% if tracker %}txaComentario{% else %}txtActividades{% endif %}" 
+                     name="{% if tracker %}comentario{% else %}com_act{% endif %}" 
+                     value="{% if tracker %}{{ tracker.comentario }}{% endif %}"
+                     placeholder="{% if not tracker %}¿En que estas trabajando?{% endif %}" 
+                     required />
+              <div class="invalid-feedback">Debe tener entre 25 y 500 caracteres.</div>
+            </div>
+            
+            <div class="col-md-2">
+              <div class="mt-3">
+                {% if tracker %}
+                  <button type="submit" class="btn btn-danger" id="btnDetener">Detener</button>
+                {% else %}
+                  <button type="submit" class="btn btn-primary" id="btnIniciar">Iniciar</button>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-md-12">
+    <div class="card">
+      <div class="card-body">
+        <table id="table" class="table table-hover table-striped dt-responsive w-100" style="border-collapse: separate; border-spacing: 0;">
+          <thead class="table-dark">
+            <tr>
+              <th class="text-center">OT - Actividad</th>
+              <th class="text-center">Info</th>
+              <th class="text-center">Proyecto</th>
+              <th class="text-center">Inicio</th>
+              <th class="text-center">Fin</th>
+              <th class="text-center">Fecha</th>
+              <th class="text-center">Total</th>
+              <th class="text-center" id="columnaReanudar">Reanudar</th>
+              <th class="text-center"></th>
+            </tr>
+          </thead>
+          <tbody>
+
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% include 'partials/_modals/modal_delete_actividad.html' %} 
+{% include 'partials/_modals/modal_edit_actividad.html' %} 
+{% endblock %} 
+
+{% block scripts %}
+
+<script>
+// --- FUNCIÓN NUEVA: Debounce ---
+  // Esta utilidad evita que saturemos al servidor.
+  // Solo ejecutará la función 'func' después de que 'wait' milisegundos
+  // hayan pasado desde la última vez que se llamó.
+  function debounce(func, wait) {
+    let timeout;
+    return function(...args) {
+      const context = this;
+      clearTimeout(timeout);
+      timeout = setTimeout(() => func.apply(context, args), wait);
+    };
+  }
+
+  function guardarComentario(id, comentario) {
+    let $status = $("#saveStatus");
+    // Validación básica
+    if (comentario.length < 25 || comentario.length > 500) {
+      $("#txaComentario").removeClass("is-valid").addClass("is-invalid");
+      $status.html('<i class="mdi mdi-alert-circle-outline text-danger"></i> Comentario no válido.');
+      return; // No guardar si no es válido
+    }
+    
+    // Si es válido, continuamos
+    $("#txaComentario").removeClass("is-invalid").addClass("is-valid");
+    $status.html('<i class="mdi mdi-spin mdi-loading"></i> Guardando...');
+    
+    $.ajax({
+      url: `api/actividades/${id}/`, // API endpoint para actualizar
+      type: "PATCH", // PATCH es para actualizaciones parciales
+      headers: {
+        "X-CSRFToken": "{{ csrf_token }}",
+      },
+      contentType: "application/json",
+      data: JSON.stringify({
+        comentario: comentario // Solo enviamos el campo que queremos cambiar
+      }),
+      success: function(data) {
+        // ¡Éxito!
+        $status.html('<i class="mdi mdi-check-circle-outline text-success"></i> Guardado.');
+        
+        // --- ¡NOTIFICACIÓN AÑADIDA! ---
+        $.NotificationApp.send(
+          "¡Anotación Guardada!", 
+          "Tu comentario se actualizó correctamente.", 
+          "bottom-right", 
+          "rgba(0,0,0,0.2)", 
+          "success"
+        );
+      },
+      error: function(xhr, status, error) {
+        console.error("Error al guardar comentario:", error);
+        $status.html('<i class="mdi mdi-alert-circle-outline text-danger"></i> Error al guardar.');
+
+        // --- ¡NOTIFICACIÓN DE ERROR AÑADIDA! ---
+        $.NotificationApp.send(
+          "¡Error!", 
+          "No se pudo guardar la anotación.", 
+          "bottom-right", 
+          "rgba(0,0,0,0.2)", 
+          "danger"
+        );
+      }
+    });
+  }
+
+  var selectEstado = $("#sltEstado");
+
+  $.each(colorMapping, function (estado, color) {
+    selectEstado.append(
+      $("<option>", {
+        value: estado,
+        text: estado,
+      })
+    );
+  });
+
+  function checkAndHighlightDate(row, data, columnIdx) {
+    var date = moment(data[columnIdx], "YYYY-MM-DD", true);
+    if (date.isValid()) {
+      var daysDifference = date.diff(moment(), "days");
+      if (daysDifference <= 7 && daysDifference >= 0) {
+        $(row)
+          .find("td:eq(" + columnIdx + ")")
+          .addClass("text-" + getColorClass(daysDifference));
+      }
+    }
+  }
+
+  function getColorClass(daysDifference) {
+    if (daysDifference <= 3) {
+      return "danger";
+    } else if (daysDifference <= 7) {
+      return "warning";
+    }
+    return "";
+  }
+
+  let intervalo = null;
+
+  function actualizarCronometro() {
+    let horaInicial = $("#cronometro").data("hora-inicial");
+    if (!horaInicial) return;
+    
+    let inicio = new Date(horaInicial);
+    let ahora = new Date();
+    let diferencia = Math.floor((ahora - inicio) / 1000);
+
+    let horas = Math.floor(diferencia / 3600);
+    let minutos = Math.floor((diferencia % 3600) / 60);
+    let segundos = diferencia % 60;
+
+    let formatoTiempo = (horas < 10 ? "0" + horas : horas) + ":" + 
+                       (minutos < 10 ? "0" + minutos : minutos) + ":" + 
+                       (segundos < 10 ? "0" + segundos : segundos);
+    
+    if (formatoTiempo.trim() !== "NaN:NaN:NaN") {
+      $("#cronometro").text(formatoTiempo);
+      document.title = formatoTiempo + " - Actividad en curso";
+    }
+  }
+
+  $(document).ready(function () {
+    $(".ingreso #sltOT").select2();
+
+    moment.locale("es");
+
+    var groupColumn = 5; 
+
+    var table = $("#table").DataTable({
+      pageLength: 50,
+      order: [
+          [groupColumn, "desc"]
+      ], 
+      processing: true,
+      serverSide: true, // ¡IMPORTANTE! Activa el procesamiento del lado del servidor
+      ordering: false, 
+      language: {
+        url: "https://cdn.datatables.net/plug-ins/2.2.1/i18n/es-MX.json",
+      },
+      ajax: { // NUEVO: Configuración de la fuente de datos AJAX
+        url: "{% url 'obtener_actividades_index' %}", // Usamos la nueva URL
+        type: "GET",
+      },
+      columns: [ // NUEVO: Definición de las columnas
+        { 
+          data: null, 
+          render: function (data) {
+            // Columna OT - Actividad
+            return (
+              '<strong>' + data.actividad_desc + '</strong>' +
+              '<div style="font-size: 12px; color: #6c757d; margin-top: 4px;">' + 
+              (data.comentario || '') + 
+              '</div>'
+            );
+          } 
+        },
+        { 
+          data: null, 
+          className: "text-center",
+          render: function (data) {
+            // Columna Info (Icono para Tippy.js)
+            const estado = data.expediente_estado || '';
+            const titulo = data.expediente_numero || '';
+            const maxreing = data.expediente_reingreso || '';
+            const vencimiento = data.expediente_vencimiento || '';
+            
+            return (
+              '<i class="uil uil-info-circle info-icon" ' +
+              'data-estado="' + estado + '" ' +
+              'data-titulo="' + titulo + '" ' +
+              'data-maxreing="' + maxreing + '" ' +
+              'data-vencimiento="' + vencimiento + '" ' +
+              'style="font-size: 20px; cursor: pointer; color: #0d6efd;"></i>'
+            );
+          }
+        },
+        { data: "ot", className: "text-center" }, // Columna Proyecto
+        { data: "inicio", className: "text-center" }, // Columna Inicio
+        { data: "fin", className: "text-center" }, // Columna Fin
+        { data: "fecha", className: "text-center" }, // Columna Fecha (Agrupación)
+        { 
+          data: "total", 
+          className: "text-center",
+          render: function(data) {
+            return '<span class="badge bg-primary">' + data + '</span>';
+          }
+        }, // Columna Total
+        { 
+          data: "id", // Usamos el ID de la actividad para el botón
+          className: "text-center",
+          render: function (data) {
+            // Columna Reanudar
+            return (
+              '<button type="button" class="btn btn-sm btn-outline-success duplicar btnReanudar" title="Reanudar actividad" data-id="' + data + '">' +
+              ' <i class="uil uil-play"></i>' +
+              '</button>'
+            );
+          }
+        }, 
+        { 
+          data: "id", // Usamos el ID de la actividad para las acciones
+          className: "text-center",
+          render: function(data) {
+            // Columna Acciones (Editar/Eliminar)
+            return (
+              '<div class="dropdown card-widgets">' +
+              '<a href="#" class="dropdown-toggle arrow-none" data-bs-toggle="dropdown" aria-expanded="false"><i class="uil uil-ellipsis-h"></i></a>' +
+              '<div class="dropdown-menu dropdown-menu-end">' +
+              '<a href="javascript:void(0);" class="dropdown-item edit"><i class="uil uil-edit me-1"></i>Editar</a>' +
+              '<a href="javascript:void(0);" class="dropdown-item text-danger delete"><i class="uil uil-trash-alt me-1"></i>Eliminar</a>' +
+              '</div>' +
+              '</div>'
+            );
+          }
+        }, 
+      ],
+      columnDefs: [
+        {
+          targets: 5,
+          visible: false,
+        },
+        {
+          targets: [0, 1, 2, 3, 4, 5, 6, 7, 8],
+          createdCell: function (td, cellData, rowData, row, col) {
+            // Añadir el data-id a la fila para los eventos de editar/eliminar/reanudar
+            $(td).parent().attr('data-id', rowData.id);
+          }
+        }
+      ],
+      rowGroup: {
+        dataSrc: "fecha", // Agrupación por la columna 'fecha' del JSON
+        startRender: function (rows, group) {
+          return moment(group).format("MMM. DD, YYYY");
+        },
+      },
+      createdRow: function (row, data, dataIndex) {
+        // Asignar el ID de la actividad a la fila para los eventos de editar/eliminar
+        $(row).attr('data-id', data.id);
+      },
+      drawCallback: function() {
+        // Inicializar Tippy.js después de que DataTables dibuje la tabla
+        initializeTippy();
+      }
+    });
+
+    // Función para inicializar Tippy.js en los iconos de información
+    function initializeTippy() {
+      tippy('.info-icon', {
+        content(reference) {
+          const estado = reference.getAttribute('data-estado');
+          const titulo = reference.getAttribute('data-titulo');
+          const maxreing = reference.getAttribute('data-maxreing');
+          const vencimiento = reference.getAttribute('data-vencimiento');
+          // Obtener color del estado
+          const color = colorMapping[estado] || '#6c757d';
+          
+          return `
+            <div style="text-align: left; padding: 5px;">
+              <div style="margin-bottom: 8px;">
+                <strong style="color: #495057;">Estado:</strong> 
+                <span style="color: ${color}; font-weight: 600;">${estado}</span>
+              </div>
+              <div style="margin-bottom: 8px;">
+                <strong style="color: #495057;">Título:</strong> 
+                <span style="color: #212529;">${titulo}</span>
+              </div>
+              <div style="margin-bottom: 8px;">
+                <strong style="color: #495057;">Máx. Reingreso:</strong> 
+                <span style="color: #212529;">${maxreing}</span>
+              </div>
+              <div>
+                <strong style="color: #495057;">Vencimiento:</strong> 
+                <span style="color: #212529;">${vencimiento}</span>
+              </div>
+            </div>
+          `;
+        },
+        allowHTML: true,
+        theme: 'material',
+        placement: 'right',
+        arrow: true,
+        interactive: true,
+        maxWidth: 350,
+      });
+    }
+
+    // Inicializar Tippy por primera vez
+    initializeTippy();
+
+    if ($("#cronometro").length > 0) {
+      actualizarCronometro();
+      intervalo = setInterval(actualizarCronometro, 1000);
+
+      // --- ¡INICIO DEL CÓDIGO NUEVO! ---
+      let $status = $("#saveStatus");
+
+      // 1. Creamos la función "debounced". Se esperará 1.5 segundos
+      // después de la última tecla presionada para guardar.
+      const debouncedGuardar = debounce(function(id, comentario) {
+        guardarComentario(id, comentario);
+      }, 1500); // 1500ms = 1.5 segundos
+
+      // 2. Escuchamos el evento 'input' (cada vez que tecleas)
+      // en el campo de comentario de la tarea activa.
+      $("#txaComentario").on("input", function() {
+        let id = $("#txtID").val(); // Obtenemos el ID de la actividad
+        let comentario = $(this).val(); // Obtenemos el texto actual
+        
+        $status.html('<i class="mdi mdi-pencil-outline"></i> Escribiendo...');
+        
+        // 3. Llamamos a la función debounced
+        debouncedGuardar(id, comentario);
+      });
+      // --- FIN DEL CÓDIGO NUEVO ---
+    }
+
+    var $ribbonSpan = $("#ribbonSpan");
+    if ($ribbonSpan.length) {
+      var status = $ribbonSpan.text().trim();
+      var color = colorMapping[status] || "#6c757d";
+      $ribbonSpan.css("background-color", color);
+    }
+  });
+
+  $(document).on("input", "#txtActividades, #txaComentario", function () {
+    let input = $(this);
+    let valor = input.val().trim();
+    if (valor.length >= 25 && valor.length <= 500) {
+      input.removeClass("is-invalid").addClass("is-valid");
+    } else {
+      input.removeClass("is-valid").addClass("is-invalid");
+    }
+  });
+
+  $("#frmIngActividad").on("submit", function (event) {
+    event.preventDefault();
+    
+    if ($("#btnDetener").length > 0) {
+      
+      if (intervalo) {
+        clearInterval(intervalo);
+        intervalo = null;
+      }
+      
+      this.submit(); // Enviamos el formulario para la acción 'end_actividad'
+      return;
+    }
+    let input = $("#txtActividades");
+    let valor = input.val().trim();
+    let submitButton = $("#btnIniciar");
+
+    if (valor.length < 25 || valor.length > 500) {
+      input.addClass("is-invalid");
+      return;
+    }
+
+    let now = moment();
+    let startTime = moment().set({ hour: 8, minute: 0 });
+    let endTime = moment().set({ hour: 18, minute: 35 });
+
+    if (now.isBefore(startTime)) {
+      alert("Formulario enviado antes de las 08:00.");
+    } else if (now.isAfter(endTime)) {
+      alert("El formulario solo se puede enviar entre las 08:00 y las 18:35.");
+      return;
+    }
+
+    submitButton.prop("disabled", true);
+
+    const data = {
+      user: $("#id_col").val(),
+      ot: $("#sltOT").val(),
+      tarea: $("#sltTarea").val(),
+      comentario: $("#txtActividades").val(),
+    };
+
+    $.ajax({
+      url: "api/actividades/",
+      type: "POST",
+      headers: {
+        "X-CSRFToken": "{{ csrf_token }}",
+      },
+      contentType: "application/json",
+      data: JSON.stringify(data),
+      success: function (data) {
+        localStorage.setItem("formSubmitted", "true");
+        location.reload();
+      },
+      error: function (xhr, status, error) {
+        console.error("Error:", error);
+        submitButton.prop("disabled", false);
+      },
+    });
+  });
+
+  $(document).on("click", ".duplicar", function () {
+    // Usa el data-id del botón reanudar si lo tiene, o de la fila si el botón no lo tiene
+    let actividadId = $(this).data("id") || $(this).closest("tr").data("id"); 
+    $.ajax({
+      url: "api/actividades/" + actividadId + "/reanudar/",
+      type: "POST",
+      headers: {
+        "X-CSRFToken": "{{ csrf_token }}",
+      },
+      contentType: "application/json",
+      success: function (data) {
+        location.reload();
+      },
+      error: function (xhr, status, error) {
+        alert("Error:", error);
+      },
+    });
+  });
+
+  let currentTaskId = null;
+  $(document).on("click", ".edit", function () {
+    currentTaskId = $(this).closest("tr").data("id"); // Usamos data("id") de la fila
+    $("#frmEdit").attr("data-task-id", currentTaskId);
+    $.get(`api/actividades/${currentTaskId}/`, function (data) {
+      cargarTareas2(data.ot, data.tarea);
+      $('select[name="ot"]').val(data.ot);
+      $('select[name="tarea"]').val(data.tarea);
+      $('textarea[name="comentario"]').val(data.comentario);
+      let fecha = moment(data.inicio).format("YYYY-MM-DDTHH:mm");
+      let fechaFin = moment(data.fin).format("YYYY-MM-DDTHH:mm");
+      $('input[name="inicio"]').val(fecha);
+      $('input[name="fin"]').val(fechaFin);
+    });
+    $("#mdlEdit").modal("show");
+  });
+
+  $(document).on("submit", "#frmEdit", function (e) {
+    e.preventDefault();
+
+    $.ajax({
+      url: `api/actividades/${currentTaskId}/`,
+      method: "PATCH",
+      headers: {
+        "X-CSRFToken": "{{ csrf_token }}",
+      },
+      data: $(this).serialize(),
+      success: function (res) {
+        $("#mdlEdit").modal("hide");
+        location.reload();
+      },
+      error: function (xhr) {
+        alert("Error al actualizar: " + xhr.responseText);
+      },
+    });
+  });
+
+  $(document).on("click", ".delete", function () {
+    fila = $(this).closest("tr");
+    id_act = fila.data("id");
+    $("#mdlDelete").modal("show");
+  });
+
+  $(document).on("click", ".btnBorrar", function () {
+    var datos = "id_act=" + id_act;
+    $.ajax({
+      type: "DELETE",
+      url: `api/actividades/${id_act}/`,
+      contentType: "application/json",
+      headers: {
+        "X-CSRFToken": "{{ csrf_token }}",
+      },
+      success: function (data) {
+        $("#mdlDelete").modal("hide");
+        $("#table").DataTable().ajax.reload(null, false);
+        $.NotificationApp.send("Actividad eliminada con éxito", "", "bottom-right", "rgba(0,0,0,0.2)", "success");
+      },
+      error: function (xhr, status, error) {
+        $.NotificationApp.send("Error al eliminar la actividad", "", "bottom-right", "rgba(0,0,0,0.2)", "danger");
+      },
+    });
+  });
+
+  function cargarTareas(otId) {
+    $.ajax({
+      url: "{% url 'tarea-list' %}?ot=" + otId + "&ordering=titulo",
+      data: { ot: otId },
+      success: function (data) {
+        let tareaSelect = $("#sltTarea");
+        tareaSelect.empty();
+        tareaSelect.append('<option value="">---------</option>'); // Siempre poner la opción vacía primero
+
+        if (data.results && data.results.length) {
+          // Si hay tareas, filtrarlas y agregarlas
+          (data.results || data).forEach(function (tarea) {
+            // AQUÍ ESTÁ EL CAMBIO:
+            // Solo agregamos la tarea si su estado NO es 'done'
+            if (tarea.estado !== 'done') {
+              tareaSelect.append(`<option value="${tarea.id}">${tarea.titulo}</option>`);
+            }
+          });
+        }
+      },
+    });
+  }
+
+  function cargarTareas2(otId, selectedTareaId = null) {
+    $.ajax({
+      url: "{% url 'tarea-list' %}?ot=" + otId + "&ordering=titulo",
+      data: { ot: otId },
+      success: function (data) {
+        let tareaSelect = $('select[name="tarea"]');
+        tareaSelect.empty();
+        tareaSelect.append('<option value="">---------</option>'); // Siempre poner la opción vacía primero
+
+        if (data.results && data.results.length) {
+          // Si hay tareas, filtrarlas y agregarlas
+          (data.results || data).forEach(function (tarea) {
+            // AQUÍ ESTÁ EL CAMBIO:
+            // Solo agregamos la tarea si su estado NO es 'done'
+            // O si es la tarea que ya estaba seleccionada (para que no desaparezca al editar)
+            if (tarea.estado !== 'done' || (selectedTareaId && tarea.id === selectedTareaId)) {
+              let selected = selectedTareaId && tarea.id === selectedTareaId ? "selected" : "";
+              tareaSelect.append(`<option value="${tarea.id}" ${selected}>${tarea.titulo}</option>`);
+            }
+          });
+        }
+      },
+    });
+  }
+
+  $("#sltOT").change(function () {
+    let otId = $(this).val();
+    if (otId) {
+      cargarTareas(otId);
+    } else {
+      $("#sltTarea").empty().append('<option value="">---------</option>');
+    }
+  });
+
+  $(".frmEdit #sltOT").change(function () {
+    let otId = $(this).val();
+    console.log(otId);
+    if (otId) {
+      cargarTareas2(otId);
+    } else {
+      $("#sltTarea").empty().append('<option value="">---------</option>');
+    }
+  });
+
+  let otInicial = $("#sltOT").val();
+  if (otInicial) {
+    cargarTareas(otInicial);
+  }
+
+  // ============================================
+  // TOUR GUIADO CON SHEPHERD.JS - MÓDULO INICIO
+  // ============================================
+  
+  const tourInicio = new Shepherd.Tour({
+    useModalOverlay: true,
+    defaultStepOptions: {
+      classes: 'shadow-lg',
+      scrollTo: { behavior: 'smooth', block: 'center' },
+      cancelIcon: {
+        enabled: true
+      }
+    }
+  });
+
+  // Paso 1: Seleccionar OT
+  tourInicio.addStep({
+    id: 'paso-select-ot',
+    text: `<h5 class="mb-2">📋 Seleccione la OT</h5>
+           <p>Seleccione la <strong>Orden de Trabajo (OT)</strong> correspondiente a la actividad que realizará.</p>
+           <p class="text-danger mb-0"><strong>⚠️ Este campo es OBLIGATORIO.</strong></p>`,
+    attachTo: {
+      element: '#sltOT',
+      on: 'bottom'
+    },
+    buttons: [
+      {
+        text: 'Salir',
+        action: tourInicio.cancel,
+        classes: 'btn btn-sm btn-secondary'
+      },
+      {
+        text: 'Siguiente',
+        action: tourInicio.next,
+        classes: 'btn btn-sm btn-primary'
+      }
+    ]
+  });
+
+  // Paso 2: Seleccionar Actividad
+  tourInicio.addStep({
+    id: 'paso-select-actividad',
+    text: `<h5 class="mb-2">🎯 Seleccione la Actividad</h5>
+           <p>Debe marcar la actividad de acuerdo a <strong>la tarea que se le ha asignado</strong>.</p>
+           <p class="mb-0">Asegúrese de seleccionar la actividad correcta según su asignación.</p>`,
+    attachTo: {
+      element: '#sltTarea',
+      on: 'bottom'
+    },
+    buttons: [
+      {
+        text: 'Anterior',
+        action: tourInicio.back,
+        classes: 'btn btn-sm btn-secondary'
+      },
+      {
+        text: 'Siguiente',
+        action: tourInicio.next,
+        classes: 'btn btn-sm btn-primary'
+      }
+    ]
+  });
+
+  // Paso 3: Anotaciones y Descripción
+  tourInicio.addStep({
+    id: 'paso-descripcion',
+    text: `<h5 class="mb-2">📝 Anotaciones y Descripción</h5>
+           <p>Usted pondrá una <strong>descripción de la actividad que realizará</strong> que sea entendible.</p>
+           <p>Al acabar con esta actividad, lo podrá modificar en caso de que requiera que sea más detallada.</p>
+           <p class="text-info mb-0"><strong>💡 Debe tener entre 25 y 500 caracteres.</strong></p>`,
+    attachTo: {
+      element: '#txtActividades',
+      on: 'bottom'
+    },
+    buttons: [
+      {
+        text: 'Anterior',
+        action: tourInicio.back,
+        classes: 'btn btn-sm btn-secondary'
+      },
+      {
+        text: 'Siguiente',
+        action: tourInicio.next,
+        classes: 'btn btn-sm btn-primary'
+      }
+    ]
+  });
+
+  // Paso 4: Botón Iniciar
+  tourInicio.addStep({
+    id: 'paso-boton-iniciar',
+    text: `<h5 class="mb-2">▶️ Botón Iniciar</h5>
+           <p>Una vez ya seleccionada su <strong>OT</strong>, <strong>Actividad</strong> y la <strong>Descripción</strong> correspondiente, presione este botón de <strong>Iniciar</strong>.</p>
+           <p class="mb-0">Esto comenzará el registro de tiempo de su actividad.</p>`,
+    attachTo: {
+      element: '#btnIniciar',
+      on: 'left'
+    },
+    buttons: [
+      {
+        text: 'Anterior',
+        action: tourInicio.back,
+        classes: 'btn btn-sm btn-secondary'
+      },
+      {
+        text: 'Siguiente',
+        action: tourInicio.next,
+        classes: 'btn btn-sm btn-primary'
+      }
+    ]
+  });
+
+  // Paso 5: Botón Reanudar (en la tabla)
+  tourInicio.addStep({
+    id: 'paso-boton-reanudar',
+    text: `<h5 class="mb-2">🔄 Botón Reanudar Actividad</h5>
+           <p>Presione este botón de <strong>Reanudar Actividad</strong> en caso de que desee continuar con la misma actividad.</p>
+           <p class="mb-0">Esto evita que tenga que seleccionar y escribir todo otra vez.</p>`,
+    attachTo: {
+      element: '#columnaReanudar',
+      on: 'bottom'
+    },
+    buttons: [
+      {
+        text: 'Anterior',
+        action: tourInicio.back,
+        classes: 'btn btn-sm btn-secondary'
+      },
+      {
+        text: 'Siguiente',
+        action: tourInicio.next,
+        classes: 'btn btn-sm btn-primary'
+      }
+    ]
+  });
+
+  // Paso 6: Recordatorio de Horarios
+  tourInicio.addStep({
+    id: 'paso-recordatorio-horarios',
+    text: `<h5 class="mb-3 text-center">⏰ RECORDATORIO IMPORTANTE</h5>
+           <div class="alert alert-warning mb-2">
+             <strong>Horario de Inicio:</strong>
+             <p class="mb-0">Debe iniciar su actividad a las <strong>8:00 AM</strong></p>
+           </div>
+           <div class="alert alert-danger mb-2">
+             <strong>Hora de Almuerzo:</strong>
+             <p class="mb-1">Debe detener su actividad a las <strong>1:00 PM</strong> o a la hora designada por administración.</p>
+             <p class="mb-0">Si salió a hacer un trámite en la mañana, deténgala a la hora que llegue para almorzar.</p>
+           </div>
+           <div class="alert alert-success mb-2">
+             <strong>Regreso del Almuerzo:</strong>
+             <p class="mb-0">Debe volver a iniciar su actividad <strong>50 minutos después</strong>, es decir: <strong>1:50 PM</strong> o la hora que se le fue designada, o su hora de llegada.</p>
+           </div>
+           <div class="alert alert-info mb-3">
+             <strong>Hora de Salida:</strong>
+             <p class="mb-0">Debe finalizar su actividad a las <strong>6:30 PM</strong> o la hora que saldrá en caso de quedarse a hacer horas extra.</p>
+           </div>
+           <p class="text-danger text-center mb-0"><strong>⚠️ Recuerde esto con atención: se evaluará todo el registro de sus actividades.</strong></p>`,
+    attachTo: {
+      element: 'body',
+      on: 'center'
+    },
+    buttons: [
+      {
+        text: 'Anterior',
+        action: tourInicio.back,
+        classes: 'btn btn-sm btn-secondary'
+      },
+      {
+        text: 'Finalizar',
+        action: tourInicio.complete,
+        classes: 'btn btn-sm btn-success'
+      }
+    ]
+  });
+
+  // Iniciar el tour cuando se hace clic en el botón de ayuda
+  document.getElementById('btnAyudaInicio').addEventListener('click', function() {
+    tourInicio.start();
+  });
+
+</script>
+
+<style>
+
+  .info-icon:hover {
+    color: #b30000ff !important;
+    transform: scale(1.2);
+  }
+
+  /* Estilos personalizados para Tippy.js */
+  .tippy-box[data-theme~='material'] {
+    background-color: #fff;
+    color: #333;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+  }
+</style>
+
+{% endblock %}

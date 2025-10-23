@@ -1,0 +1,303 @@
+{% extends 'base.html' %} {% block content %} {% load static %}
+<!-- Fullcalendar css -->
+<link href="{% static 'vendor/fullcalendar/main.min.css' %}" rel="stylesheet" type="text/css" />
+<!-- Flatpickr Timepicker css -->
+<link href="{% static 'vendor/flatpickr/flatpickr.min.css' %}" rel="stylesheet" type="text/css" />
+<!-- start page title -->
+<div class="row">
+  <div class="col-12">
+    <div class="page-title-box">
+      <h4 class="page-title">{{title}}</h4>
+    </div>
+  </div>
+</div>
+<!-- end page title -->
+<div class="row">
+  <div class="card">
+    <div class="card-body">
+      <div class="row">
+        <div class="col-lg-3">
+          <div class="d-grid">
+            <button class="btn btn-lg font-16 btn-danger" data-bs-toggle="modal" data-bs-target="#mdl"><i class="mdi mdi-plus-circle-outline"></i> Crear Evento</button>
+          </div>
+          <div id="legend-events" class="mt-3 p-3 border rounded">
+            <h4 class="text-center mb-3">Leyenda</h4>
+            <div class="external-event bg-info-lighten text-info">
+              <i class="mdi mdi-checkbox-blank-circle me-2 vertical-middle"></i>
+              Cumpleaños
+            </div>
+            <div class="external-event bg-success-lighten text-success">
+              <i class="mdi mdi-checkbox-blank-circle me-2 vertical-middle"></i>
+              Vacaciones
+            </div>
+            <div class="external-event bg-warning-lighten text-warning">
+              <i class="mdi mdi-checkbox-blank-circle me-2 vertical-middle"></i>
+              Reingreso de Expediente
+            </div>
+            <div class="external-event bg-danger-lighten text-danger">
+              <i class="mdi mdi-checkbox-blank-circle me-2 vertical-middle"></i>
+              Vencimiento de Expediente
+            </div>
+            <div class="external-event bg-secondary-lighten text-secondary">
+              <i class="mdi mdi-checkbox-blank-circle me-2 vertical-middle"></i>
+              Feriados
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-9">
+          <div class="mt-4 mt-lg-0">
+            <div id="calendar"></div>
+          </div>
+        </div>
+        <!-- end col -->
+      </div>
+      <!-- end row -->
+    </div>
+    <!-- end card body-->
+  </div>
+  <!-- end card -->
+</div>
+
+<!-- Modal -->
+<div class="modal fade" id="mdl" tabindex="-1" aria-labelledby="modalExpedienteLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title" id="standard-modalLabel">Crear Eventos</h4>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form id="form">
+        {% csrf_token %}
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="txtTitulo" class="form-label">Titulo</label>
+            {{form.titulo}}
+          </div>
+          <div class="row">
+            <div class="mb-3 col-md-4">
+              <label for="txtInicio" class="form-label">Fecha</label>
+              {{form.inicio}}
+            </div>
+            <div class="mb-3 col-md-4">
+              <label for="txtHora" class="form-label">Inicio</label>
+              {{form.hora}}
+            </div>
+            <div class="mb-3 col-md-4">
+              <label for="txtHoraFin" class="form-label">Fin</label>
+              {{form.horaFin}}
+            </div>
+          </div>
+          <div class="mb-3">
+            <label for="sltOT" class="form-label">OTS</label>
+            {{form.ot}}
+          </div>
+          <div class="mb-3">
+            <label for="txtUsers" class="form-label">Usuarios</label>
+            {{form.usuario}}
+          </div>
+          <div class="mb-3">
+            <label for="txtDescripción" class="form-label">Descripcion</label>
+            {{form.descripcion}}
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-primary" id="guardar">Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+<!-- Modal para mostrar detalles del evento -->
+<div class="modal fade" id="mdlEvento" tabindex="-1" aria-labelledby="eventoModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title" id="eventoModalLabel">Detalles del Evento</h4>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body">
+        <p><strong>Título:</strong> <span id="mdlTitulo"></span></p>
+        <p><strong>Inicio:</strong> <span id="mdlInicio"></span></p>
+        <p><strong>Fin:</strong> <span id="mdlFin"></span></p>
+        <p><strong>Ot:</strong> <span id="mdlOt"></span></p>
+        <p><strong>Usuario:</strong> <span id="mdlUsuario"></span></p>
+        <p><strong>Descripción:</strong> <span id="mdlDescripcion"></span></p>
+        <!-- Puedes añadir más campos según tus datos -->
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-danger" id="btnEliminarEvento">Eliminar</button>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- end row -->
+{% endblock %} {% block scripts %}
+<!-- Fullcalendar js -->
+<script src="{% static 'vendor/fullcalendar/main.min.js'%}"></script>
+<script src="{% static 'vendor/fullcalendar/locales/es.js'%}"></script>
+<!-- Flatpickr Timepicker Plugin js -->
+<script src="{% static 'vendor/flatpickr/flatpickr.min.js' %}"></script>
+<script>
+  $(document).ready(function () {
+    let calendarEl = document.getElementById("calendar");
+    calendar = new FullCalendar.Calendar(calendarEl, {
+      initialView: "dayGridMonth",
+      firstDay: 0,
+      themeSystem: "bootstrap",
+      buttonText: {
+        today: "Hoy",
+        month: "Mes",
+        week: "Semana",
+        day: "Día",
+        list: "Lista",
+        prev: "Anterior",
+        next: "Siguiente",
+      },
+      headerToolbar: {
+        left: "prev,next today",
+        center: "title",
+        right: "dayGridMonth,timeGridWeek,timeGridDay,listMonth",
+      },
+      locale: "es",
+      events: function (fetchInfo, successCallback, failureCallback) {
+        let events = [];
+        let requests = [];
+        requests.push(
+          $.ajax({
+            url: "{% url 'calendario-list' %}",
+            method: "GET",
+            dataType: "json",
+            success: function (response) {
+              let eventos = response.results || response;
+              eventos.forEach((event) => {
+                events.push({
+                  id: event.id,
+                  title: event.title,
+                  start: event.start,
+                  end: event.end,
+                  allDay: event.allDay,
+                  className: event.className,
+                  borderColor: "rgb(0, 0, 0, 0.1)",
+                  extendedProps: {
+                    ot: event.ot,
+                    usuario: event.usuario,
+                    descripcion: event.descripcion,
+                  },
+                });
+              });
+            },
+            error: function () {
+              console.error("Error al cargar eventos");
+            },
+          })
+        );
+
+        // ✅ Esperar a que todas las llamadas AJAX terminen antes de ejecutar el callback
+        $.when
+          .apply($, requests)
+          .done(function () {
+            successCallback(events);
+          })
+          .fail(function () {
+            console.error("Error en una o más solicitudes AJAX");
+            failureCallback();
+          });
+      },
+      eventClick: function (info) {
+        info.jsEvent.preventDefault();
+        let clases = info.event.classNames;
+        if (clases.includes("bg-primary")) {
+          $("#mdlTitulo").text(info.event.title);
+          $("#mdlInicio").text(moment(info.event.start).format("DD/MM/YYYY HH:mm"));
+          $("#mdlFin").text(moment(info.event.end).format("DD/MM/YYYY HH:mm"));
+          $("#mdlOt").text(info.event.extendedProps.ot);
+          $("#mdlUsuario").text(info.event.extendedProps.usuario);
+          $("#mdlDescripcion").text(info.event.extendedProps.descripcion);
+          $("#btnEliminarEvento").data("id", info.event.id);
+          $("#mdlEvento").modal("show");
+        }
+      },
+    });
+
+    calendar.render();
+
+    $("#mdl").on("show.bs.modal", function () {
+      // Poner la fecha de hoy en el campo de fecha
+      let hoy = moment().format("YYYY-MM-DD");
+      $("#txtInicio").val(hoy);
+
+      // Opcional: poner la hora actual en inicio y +1h en fin
+      let horaActual = moment().format("HH:mm");
+      let horaFin = moment().add(1, "hour").format("HH:mm");
+      $("#txtHora").val(horaActual);
+      $("#txtHoraFin").val(horaFin);
+    });
+
+    // Al cambiar la hora de inicio, sumar una hora a la hora de fin
+    $("#txtHora").on("change", function () {
+      let hora = $(this).val();
+      if (hora) {
+        let nuevaHoraFin = moment(hora, "HH:mm").add(1, "hour").format("HH:mm");
+        $("#txtHoraFin").val(nuevaHoraFin);
+      }
+    });
+  });
+
+  //CRUD de eventos
+  $(document).on("click", "#guardar", function (e) {
+    e.preventDefault();
+    let fecha = $("#txtInicio").val();
+    let hora = $("#txtHora").val();
+    let horaFin = $("#txtHoraFin").val();
+    let inicioCompleto = fecha + "T" + hora;
+    let finCompleto = fecha + "T" + horaFin;
+    let data = {
+      titulo: $("#txtEvento").val(),
+      inicio: inicioCompleto,
+      fin: finCompleto,
+      ot: $("#sltOt").val(),
+      descripcion_evento: $("#txtDescripcion").val(),
+      usuario: $("#sltUsuario").val(),
+    };
+    let url = "../api/eventos/";
+    console.log("Datos del formulario:", data);
+    $.ajax({
+      type: "POST",
+      url: url,
+      data: data,
+      headers: {
+        "X-CSRFToken": "{{ csrf_token }}",
+      },
+      success: function (response) {
+        calendar.refetchEvents();
+        $("#mdl").modal("hide");
+        jqueryToast("¡Bien Hecho!", "Evento Ingresado correctamente");
+      },
+      error: function (xhr, status, error) {
+        jqueryToast("¡Error!", "No se pudo ingresar el evento", "bottom-right", "error");
+      },
+    });
+  });
+  $(document).on("click", "#btnEliminarEvento", function () {
+    let eventId = $(this).data("id");
+
+    if (!eventId) return alert("ID de evento no encontrado");
+
+    $.ajax({
+      url: `../api/eventos/${eventId}/`,
+      type: "DELETE",
+      headers: {
+        "X-CSRFToken": "{{ csrf_token }}",
+      },
+      success: function () {
+        $("#mdlEvento").modal("hide");
+        calendar.refetchEvents();
+        jqueryToast("¡Bien Hecho!", "Evento eliminado correctamente");
+      },
+      error: function (xhr, status, error) {
+        jqueryToast("Error", error, "bottom-right", "error");
+      },
+    });
+  });
+</script>
+{% endblock %}

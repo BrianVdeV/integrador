@@ -1,0 +1,49 @@
+<div id="mdlAddExp" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="standard-modalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title" id="standard-modalLabel">Crear nuevo expediente</h4>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-hidden="true"></button>
+      </div>
+      <form id="frmAdd">
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="sltOT" class="form-label">OT</label>
+            <!-- Single Select -->
+            {{form.ot}}
+          </div>
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label for="sltEntidad" class="form-label">Entidad</label>
+              {{form.entidad}}
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="txtTitulo" class="form-label">Titulo</label>
+              {{form.numero}}
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label for="estado" class="form-label">Estado</label>
+              <select name="estado" class="form-select" id="estado">
+                {% for estado,color in estados.items %}
+                <option value="{{ estado }}">{{ estado }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <!-- Single Date Picker -->
+            <div class="col-md-6 mb-3">
+              <label for="txtPresentacion" class="form-label">Presentación</label>
+              {{form.presentacion}}
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-primary" type="submit">Crear</button>
+        </div>
+      </form>
+    </div>
+    <!-- /.modal-content -->
+  </div>
+  <!-- /.modal-dialog -->
+</div>

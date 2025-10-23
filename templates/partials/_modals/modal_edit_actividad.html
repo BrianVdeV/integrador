@@ -1,0 +1,50 @@
+<div id="mdlEdit" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="standard-modalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title" id="standard-modalLabel">Editar</h4>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-hidden="true"></button>
+      </div>
+      <form class="frmEdit" id="frmEdit">
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="ot" class="form-label">OT</label>
+            {{form.ot}}
+          </div>
+          <div class="mb-3">
+            <label for="tarea" class="form-label">Tarea</label>
+            {{form.tarea}}
+          </div>
+          <div class="mb-3">
+            <label for="comentario" class="form-label">Descripcion</label>
+            {{form.comentario}}
+          </div>
+          {% if user.is_superuser %} {% if 'Detallado' in title %}
+          <div class="mb-3">
+            <label for="user" class="form-label">Usuario</label>
+            {{form.user}}
+          </div>
+          {% endif %}
+          <div class="row g-2">
+            <div class="mb-3 col-md-6">
+              <label for="inicio" class="form-label">Inicio</label>
+              {{form.inicio}}
+            </div>
+            <div class="mb-3 col-md-6">
+              <label for="fin" class="form-label">Fin</label>
+              {{form.fin}}
+            </div>
+          </div>
+          {% endif %}
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cerrar</button>
+          <button type="submit" class="btn btn-success">Editar</button>
+        </div>
+      </form>
+    </div>
+    <!-- /.modal-content -->
+  </div>
+  <!-- /.modal-dialog -->
+</div>
+<!-- /.modal -->
