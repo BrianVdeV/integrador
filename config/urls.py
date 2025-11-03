@@ -22,10 +22,5 @@ urlpatterns = [
     path('', include('auth.urls')),
     path('', include('intranet.urls')),
     path('', include('kanban.urls')),
-    path('', include('gastos.urls')),
-    path('', include('apps.asistencia.urls')),
-    path('', include('apps.postulantes.urls')),
-    path('', include('cotizaciones.urls')),
-    path('', include('apps.ubicaciones.urls')),
     path('admin/', admin.site.urls),
 ]

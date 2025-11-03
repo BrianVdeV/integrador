@@ -254,21 +254,6 @@
           }
         });
 
-        $.ajax({
-          url: "{% url "notificaciones-toast" %}",  // Ajusta la URL según tu configuración
-          type: "GET",
-          dataType: "json",
-          success: function (response) {
-              if (response.length > 0) {
-                  response.forEach(notificacion => {
-                      jqueryToast(notificacion.titulo, notificacion.descripcion, "warning");
-                  });
-              }
-          },
-          error: function (xhr, status, error) {
-              console.error("Error al cargar notificaciones:", error);
-          }
-        });
         {% if messages %}
           {% for message in messages %}
             {% if message.tags == "success" %}
@@ -452,12 +437,12 @@
           // 🔄 Ejecutar verificación inmediatamente y luego cada 2 minutos
           function iniciarMonitoreo() {
               verificarYDetener(); // Primera ejecución inmediata
-              
+
               // Limpiar intervalo anterior si existe
               if (intervaloNotificaciones) {
                   clearInterval(intervaloNotificaciones);
               }
-              
+
               // Configurar nuevo intervalo cada 2 minutos
               intervaloNotificaciones = setInterval(verificarYDetener, 2 * 60 * 1000);
           }

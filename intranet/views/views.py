@@ -85,8 +85,6 @@ def index(request):
     """ Index """
     form = ActividadesForm(user=request.user)
     id = request.user.id
-    if request.user.is_superuser:
-        crear_cajas_chicas_faltantes()
 
     tracker = Actividades.objects.filter(user=id, fin=None).first()
     if tracker:

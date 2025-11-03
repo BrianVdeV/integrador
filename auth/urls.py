@@ -35,11 +35,6 @@ urlpatterns = [
     path('check-username/', views.check_username, name='check-username'),
     path('cambiar-contrasena-equipo/<int:usuario_id>/',
          views.cambiar_contrasena_usuario, name='cambiar_contrasena_equipo'),
-    path('actualizar-contrato/', views.actualizar_contrato,
-         name='actualizar-contrato'),
-    path('eliminar-contrato/<int:contrato_id>/',
-         views.eliminar_contrato, name='eliminar-contrato'),
-    path('add-contrato/', views.add_contrato, name='add_contrato'),
     path('api/select2/users/',
          views.UsersSelectViewSet.as_view({'get': 'list'}), name='select2_users'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -68,13 +68,6 @@
         </a>
       </li>
       <li class="side-nav-item">
-        <a href="{% url 'gastos' %}" class="side-nav-link">
-          <i class=" ri-coins-fill"></i>
-          <span>Gastos</span>
-          <span id="rejected_expenses" class="badge bg-danger" style="display: none;">0</span> 
-        </a>
-      </li>
-      <li class="side-nav-item">
         <a
           data-bs-toggle="collapse"
           href="#sidebarAgenda"
@@ -95,7 +88,7 @@
             </li>
             {% endif %}
             <li>
-              <a href="{%url 'tarea_kanban'%}">Procesos del día</a>
+              <a href="{%url 'tarea_kanban'%}">Kanban</a>
             </li>
           </ul>
         </div>
@@ -115,11 +108,6 @@
         </a>
         <div class="collapse" id="sidebarDashboard">
           <ul class="side-nav-second-level">
-            {% if user.is_superuser %}
-            <li>
-              <a href="{%url 'dashboard_gastos'%}">Gastos</a>
-            </li>
-            {% endif %}
             <li>
               <a href="{%url 'dashboard_proyectos'%}">Proyectos</a>
             </li>
@@ -146,30 +134,6 @@
             <li>
               <a href="{%url 'detallado'%}">Detallado</a>
             </li>
-            {% if user.is_superuser %}
-            <li>
-              <a href="{%url 'informes_gastos'%}">Gastos</a>
-            </li>
-            {% endif %}
-          </ul>
-        </div>
-      </li>
-      <li class="side-nav-item">
-        <a
-          data-bs-toggle="collapse"
-          href="#sidebarEmail"
-          aria-expanded="false"
-          aria-controls="sidebarEmail"
-          class="side-nav-link"
-        >
-          <i class="uil-map-marker"></i>
-          <span> Ubicaciones </span>
-          <span class="menu-arrow"></span>
-        </a>
-        <div class="collapse" id="sidebarEmail">
-          <ul class="side-nav-second-level">
-            <li>
-              <a href="{%url 'mapa'%}">Mapa</a>
           </ul>
         </div>
       </li>
@@ -186,29 +150,6 @@
           <span>Expedientes</span>
         </a>
       </li>
-      {% if user.is_superuser %}
-      <li class="side-nav-item">
-        <a data-bs-toggle="collapse" href="#sidebarFinanzas"  aria-expanded="false" aria-controls="sidebarEmail" class="side-nav-link">
-          <i class="uil-usd-circle "></i>
-          <span id="pending-expenses" class="badge bg-warning">0</span>
-          <span> Finanzas </span>
-          <span class="menu-arrow"></span>
-        </a>
-        <div class="collapse" id="sidebarFinanzas">
-          <ul class="side-nav-second-level">
-            <li>
-              <a href="{%url 'aprobaciones'%}">Aprobaciones</a>
-            </li>
-            <li>
-              <a href="{%url 'ingresos'%}">Ingresos</a>
-            </li>
-            <li>
-              <a href="{%url 'sueldo'%}">Sueldos</a>
-            </li>
-          </ul>
-        </div>
-      </li>
-      {% endif %}
       <li class="side-nav-item">
         {% if user.is_superuser %}
         <a href="{% url 'equipo' %}" class="side-nav-link">
@@ -219,37 +160,6 @@
           <span> Equipo </span>
         </a>
       </li>
-      <li class="side-nav-item">
-        <a href="{% url 'cotizaciones' %}" class="side-nav-link">
-          <i class="uil-bill"></i>
-          <span> Cotizaciones </span>
-        </a>
-      </li>
-      {% if user.is_superuser %}
-      <li class="side-nav-item">
-          <a data-bs-toggle="collapse" href="#sidebarPostulantes" aria-expanded="false" aria-controls="sidebarEmail" class="side-nav-link">
-              <i class="uil-envelope"></i>
-              <span> Postulantes </span>
-              <span class="menu-arrow"></span>
-          </a>
-          <div class="collapse" id="sidebarPostulantes">
-              <ul class="side-nav-second-level">
-                  <li>
-                      <a href="{% url "postulantes" %}">Postulantes</a>
-                  </li>
-              </ul>
-          </div>
-          
-      </li>
-      
-      {% endif %}
-      <li class="side-nav-title">Complementos</li>
-      <li class="side-nav-item">
-        <a href="{% url 'ayuda' %}" class="side-nav-link">
-          <i class="uil-question-circle"></i>
-          <span> Ayuda </span>
-        </a>
-      </li>
     </ul>
 
     <!--- End Sidemenu -->
@@ -257,65 +167,3 @@
     <div class="clearfix"></div>
   </div>
 </div>
-<script>
-  // Esta función obtiene el número de gastos pendientes desde el servidor
-function getPendingExpenses() {
-  fetch("{% url 'get_pending_expenses' %}", {  // Reemplaza con la URL correcta
-      method: "GET",
-      headers: {
-          "Content-Type": "application/json",
-          "X-CSRFToken": "{{ csrf_token }}"  // Asegúrate de incluir el token CSRF si estás utilizando Django
-      }
-  })
-  .then(response => response.json())
-  .then(data => {
-      // Verifica si se obtuvo el número de gastos pendientes correctamente
-      if (data.pending_expenses !== undefined) {
-          const badge = document.getElementById("pending-expenses");
-          badge.textContent = data.pending_expenses;  // Actualiza el número
-          if (data.pending_expenses > 0) {
-              badge.style.display = 'inline-block';  // Muestra el círculo solo si hay gastos pendientes
-          } else {
-              badge.style.display = 'none';  // Oculta el círculo si no hay gastos pendientes
-          }
-      }
-  })
-  .catch(() => {
-    // No hacer nada o manejar el error silenciosamente
-  });
-}
-function getRejectedExpenses() {
-  fetch("{% url 'get_rejected_expenses' %}", {  // Asegúrate de que esta URL sea la correcta
-      method: "GET",
-      headers: {
-          "Content-Type": "application/json",
-          "X-CSRFToken": "{{ csrf_token }}"  // Incluye el token CSRF si lo estás utilizando
-      }
-  })
-  .then(response => response.json())
-  .then(data => {
-      // Verifica si se obtuvo el número de reportes rechazados correctamente
-      if (data.rejected_expenses_with_messages !== undefined) {
-          const badge = document.getElementById("rejected_expenses"); // Asegúrate de que el id sea correcto
-          badge.textContent = data.rejected_expenses_with_messages;  // Actualiza el número
-
-          // Muestra u oculta el círculo según el número de reportes rechazados
-          if (data.rejected_expenses_with_messages > 0) {
-              badge.style.display = 'inline-block';  // Muestra el círculo si hay reportes rechazados
-          } else {
-              badge.style.display = 'none';  // Oculta el círculo si no hay reportes rechazados
-          }
-      }
-  })
-  .catch(() => {
-    // Maneja el error si es necesario
-  });
-}
-
-
-window.onload = function() {
-  getPendingExpenses();  // Cargar gastos pendientes
-  getRejectedExpenses();  // Cargar gastos rechazados
-};
-
-</script>

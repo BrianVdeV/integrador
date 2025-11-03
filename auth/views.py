@@ -1,7 +1,6 @@
 """Vista del equipo, area, login y logout"""
 import json
 from datetime import datetime
-from decimal import Decimal
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout, update_session_auth_hash
@@ -10,10 +9,8 @@ from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseRedirect, HttpResponse
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_POST
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
-from gastos.models import Contrato
 from .serializers import AreaSerializer, UserSerializer, ColaboradorSerializer, Select2Serializer
 from .models import Colaborador, Area
 from .forms import AddUserForm, EditUserForm, CustomPasswordChangeForm, AddAreaForm, EditAreaForm, CustomSetPasswordForm
@@ -179,95 +176,14 @@ def perfil_detalle(request, id_user):
     perfil = User.objects.get(id=id_user)
 
     colaborador = Colaborador.objects.get(id=id_user)
-    contratos = Contrato.objects.filter(id_user=id_user).order_by('inicio')
     area = colaborador.area
     context = {
         'perfil': perfil,
         'colaborador': colaborador,
-        'contratos': contratos,
         'area': area,
     }
 
     return render(request, 'admin/perfil_detallado.html', context)
-
-
-@csrf_exempt
-@require_POST  # Asegura que solo las solicitudes POST sean aceptadas
-def actualizar_contrato(request):
-    try:
-        # Obtener los datos del cuerpo de la solicitud (JSON)
-        data = json.loads(request.body)
-
-        contrato_id = data.get('id')
-        cargo = data.get('cargo')
-        duracion = data.get('duracion')
-        inicio = data.get('inicio')
-        fin = data.get('fin')
-        sueldo = data.get('sueldo')
-
-        # Buscar el contrato y actualizarlo
-        contrato = Contrato.objects.get(id=contrato_id)
-        contrato.cargo = cargo
-        contrato.duracion = duracion
-        contrato.inicio = inicio
-        contrato.fin = fin
-        contrato.sueldo = sueldo
-        contrato.save()
-
-        # Responder con un JSON de éxito
-        return JsonResponse({'success': True})
-
-    except Contrato.DoesNotExist:
-        # Si no se encuentra el contrato
-        return JsonResponse({'success': False, 'message': 'Contrato no encontrado'}, status=404)
-
-    except json.JSONDecodeError:
-        # Si los datos JSON no son válidos
-        return JsonResponse({'success': False, 'message': 'Datos JSON inválidos'}, status=400)
-
-    except Exception as e:
-        # Captura cualquier otro error
-        return JsonResponse({'success': False, 'message': str(e)}, status=500)
-
-
-def eliminar_contrato(request, contrato_id):
-    if request.method == 'DELETE':
-        contrato = get_object_or_404(Contrato, id=contrato_id)
-        contrato.delete()
-        return JsonResponse({'success': True})
-    return JsonResponse({'success': False}, status=400)
-
-
-@csrf_exempt
-def add_contrato(request):
-    if request.method == 'POST':
-        inicio = request.POST.get('inicio')
-        fin = request.POST.get('fin')
-        sueldo = request.POST.get('sueldo')
-        duracion = request.POST.get('duracion')
-        cargo = request.POST.get('cargo')
-        id_user = request.POST.get('id_user')
-
-        try:
-            # Convertir strings a objetos date y decimal
-            inicio = datetime.strptime(inicio, '%Y-%m-%d').date()
-            fin = datetime.strptime(fin, '%Y-%m-%d').date()
-            sueldo = Decimal(sueldo)
-
-            # Buscar usuario y crear contrato
-            user = User.objects.get(id=id_user)
-            contrato = Contrato(id_user=user, inicio=inicio,
-                                fin=fin, sueldo=sueldo, cargo=cargo, duracion=duracion)
-            contrato.save()
-
-            return JsonResponse({'success': True, 'message': 'Contrato añadido correctamente.'})
-
-        except User.DoesNotExist:
-            return JsonResponse({'success': False, 'message': 'Usuario no encontrado.'})
-        except Exception as e:
-            return JsonResponse({'success': False, 'message': f'Error inesperado: {str(e)}'})
-
-    return JsonResponse({'success': False, 'message': 'Método inválido.'}, status=400)
 
 
 def actualizar_foto_perfil(request, usuario_id):

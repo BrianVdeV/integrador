@@ -48,12 +48,7 @@ INSTALLED_APPS = [
     'corsheaders',
     "auth.apps.AuthConfig",
     'intranet',
-    'apps.asistencia',
     'kanban',
-    'gastos',
-    'apps.postulantes',
-    'cotizaciones',
-    'apps.ubicaciones'
 ]
 
 MIDDLEWARE = [
@@ -158,10 +153,7 @@ REST_FRAMEWORK = {
 }
 
 CORS_ALLOWED_ORIGINS = ["http://127.0.0.1:8000",
-                        "https://planosperu.com.pe",
-                        "https://www.planosperu.com.pe",
                         "http://localhost:3000",
-                        "http://38.25.30.241"
                         ]
 
 CORS_ALLOW_CREDENTIALS = True
@@ -172,13 +164,3 @@ CSRF_COOKIE_NAME = 'csrftoken'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 X_FRAME_OPTIONS = 'SAMEORIGIN'
-
-
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'planosperu.com.pe'
-EMAIL_PORT = 465
-EMAIL_HOST_USER = 'info@planosperu.com.pe'
-EMAIL_HOST_PASSWORD = 'vHSR~kuhV!jQ'
-EMAIL_USE_SSL = True
-EMAIL_USE_TLS = False
-DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
