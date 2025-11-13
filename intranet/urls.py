@@ -46,4 +46,5 @@ urlpatterns = [
     path('index/api/', views.list_actividades_index,
          name='obtener_actividades_index'),  # NUEVA RUTA
     path('', views.index, name='index'),
+    path('api/reportes-pdf/', views.ReportePDFView.as_view(), name='reportes_pdf'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

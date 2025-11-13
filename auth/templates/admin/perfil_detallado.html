@@ -374,44 +374,6 @@
         </div>
     </div>
 </div>
-<!-- Modal Editar Contrato -->
-<div class="modal fade" id="editarContratoModal" tabindex="-1" aria-labelledby="editarContratoModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="editarContratoModalLabel">Editar Contrato</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body">
-          <form id="editarContratoForm">
-            <!-- CAMBIAMOS LOS IDs, agregando sufijo 'Edit' -->
-            <input type="hidden" id="contratoId" name="id">
-            <div class="mb-3">
-            <label for="cargoEdit" class="form-label">Cargo</label>
-            <input type="text" class="form-control" id="cargoEdit" name="cargo">
-            </div>
-            <div class="mb-3">
-                <label for="duracionEdit" class="form-label">Duración</label>
-                <input type="text" class="form-control" id="duracionEdit" name="duracion">
-                </div>
-            <div class="mb-3">
-            <label for="inicioEdit" class="form-label">Fecha de Inicio</label>
-            <input type="date" class="form-control" id="inicioEdit" name="inicio">
-            </div>
-            <div class="mb-3">
-            <label for="finEdit" class="form-label">Fecha de Fin</label>
-            <input type="date" class="form-control" id="finEdit" name="fin">
-            </div>
-            <div class="mb-3">
-            <label for="sueldoEdit" class="form-label">Sueldo</label>
-            <input type="number" step="0.01" class="form-control" id="sueldoEdit" name="sueldo">
-            </div>
-            <button type="submit" class="btn btn-primary">Guardar Cambios</button>
-          </form>
-        </div>
-      </div>
-    </div>
-  </div>
   
 <!-- Modal Eliminar -->
 <div id="mdlDelete" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="standard-modalLabel" aria-hidden="true">
@@ -465,53 +427,6 @@
             });
         });
 
-        // Manejar el envío del formulario de actualización de contrato
-        document.getElementById('editarContratoForm').addEventListener('submit', function(event) {
-            event.preventDefault(); // Evitar el envío por defecto del formulario
-
-            // Recoger los datos del formulario
-            const contratoId = document.getElementById('contratoId').value;
-            const cargo = document.getElementById('cargoEdit').value;
-            const duracion = document.getElementById('duracionEdit').value;
-            const inicio = document.getElementById('inicioEdit').value;
-            const fin = document.getElementById('finEdit').value;
-            const sueldo = document.getElementById('sueldoEdit').value;
-
-            // Crear el objeto de datos que se enviará al servidor
-            const datos = {
-                id: contratoId,
-                cargo: cargo,
-                duracion: duracion,
-                inicio: inicio,
-                fin: fin,
-                sueldo: sueldo
-            };
-            const url = "{% url 'actualizar-contrato' %}"; // Esto generará la URL para actualizar contrato
-            // Enviar los datos al servidor utilizando Fetch
-            fetch(url, {
-                method: 'POST', // Usar el método POST para enviar datos
-                headers: {
-                    'Content-Type': 'application/json' // Indicamos que los datos están en formato JSON
-                },
-                body: JSON.stringify(datos) // Convertimos el objeto a JSON
-            })
-            .then(response => response.json()) // Suponemos que el servidor responde con JSON
-            .then(data => {
-                if (data.success) {
-                    // Si la actualización fue exitosa, puedes cerrar el modal y actualizar la tabla
-                    alert('Contrato actualizado correctamente');
-                    // Aquí podrías recargar la lista de contratos o actualizar la tabla con los nuevos datos
-                    location.reload(); // Esto recargará la página (alternativamente, puedes actualizar la tabla sin recargar)
-                } else {
-                    // Si hubo un error
-                    alert('Hubo un error al actualizar el contrato');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Hubo un error al procesar la solicitud');
-            });
-        });
    // Seleccionamos todos los botones de "Eliminar"
    const deleteButtons = document.querySelectorAll('.delete');
     
@@ -566,88 +481,6 @@
            });
        });
    }
-   const addContratoForm = document.getElementById('addContratoForm');
-
-    if (addContratoForm) {
-        addContratoForm.addEventListener('submit', function(event) {
-            event.preventDefault();
-
-            // Capturamos los valores del formulario
-            const inicio = document.getElementById('inicio').value;
-            const fin = document.getElementById('fin').value;
-            const sueldo = document.getElementById('sueldo').value;
-            const cargo = document.getElementById('cargo').value;
-            const duracion = document.getElementById('duracion').value;
-            const id_user = document.getElementById('id_user').value;
-
-            // Enviamos los datos al backend
-            fetch('{% url "add_contrato" %}', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-                body: new URLSearchParams({
-                    'inicio': inicio,
-                    'fin': fin,
-                    'sueldo': sueldo,
-                    'cargo': cargo,
-                    'duracion': duracion,
-                    'id_user': id_user,
-                    'csrfmiddlewaretoken': document.querySelector('[name=csrfmiddlewaretoken]').value
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    alert(data.message);
-                    location.reload();
-                } else {
-                    alert(data.message);
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Hubo un error al añadir el contrato.');
-            });
-        });
-    }
-    });
-    document.getElementById('editarContratoForm').addEventListener('submit', function(event) {
-        event.preventDefault();
-        
-        const contratoId = document.getElementById('contratoId').value;
-        const cargo = document.getElementById('cargo').value;
-        const duracion = document.getElementById('duracion').value;
-        const inicio = document.getElementById('inicio').value;
-        const fin = document.getElementById('fin').value;
-        const sueldo = document.getElementById('sueldo').value;
-        
-        // Hacer la solicitud AJAX para enviar los datos al servidor
-        fetch('../../editar-contrato/', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                id: contratoId,
-                cargo: cargo,
-                duracion: duracion,
-                inicio: inicio,
-                fin: fin,
-                sueldo: sueldo
-            })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                // Actualizar la tabla en la página o realizar alguna otra acción
-                alert('Contrato actualizado exitosamente.');
-                location.reload();  // Recargar la página para ver los cambios
-            } else {
-                alert('Hubo un error al actualizar el contrato.');
-            }
-        })
-        .catch(error => console.error('Error:', error));
     });
     $(document).ready(function() {
         // Obtener la calificación inicial desde el servidor

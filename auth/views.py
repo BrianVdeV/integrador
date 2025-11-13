@@ -188,7 +188,7 @@ def perfil_detalle(request, id_user):
 
 def actualizar_foto_perfil(request, usuario_id):
     """Actualizar foto de Perfil"""
-    colaborador = Colaborador.objects.get(id_user=usuario_id)
+    colaborador = Colaborador.objects.get(user=usuario_id)
 
     if request.method == 'POST' and request.FILES.get('foto'):
         colaborador.foto = request.FILES['foto']

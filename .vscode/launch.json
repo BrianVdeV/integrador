@@ -24,7 +24,7 @@
       "request": "launch",
       "program": "${workspaceFolder}/manage.py",
       "console": "integratedTerminal",
-      "args": ["runserver"],
+      "args": ["runserver", "--noreload", "--nothreading"],
       "django": true
     },
     {

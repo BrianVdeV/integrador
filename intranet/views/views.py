@@ -252,8 +252,6 @@ def proyecto_detalle(request, id_ot):
     """ Proyectos Detalle """
     ot = Ot.objects.get(pk=id_ot)
     form = TareaForm()
-    gastos = Gasto.objects.filter(ot_id=id_ot)
-    total_gastos = gastos.aggregate(total=Sum('monto'))['total'] or 0
     actividades = Actividades.objects.filter(ot_id=id_ot)
     total_timedelta = timedelta()
     for act in actividades:
@@ -266,15 +264,11 @@ def proyecto_detalle(request, id_ot):
     total_horas = int(total_timedelta.total_seconds() // 3600)
     total_minutos = int((total_timedelta.total_seconds() % 3600) // 60)
     total_horas_registradas = f"{total_horas:02}:{total_minutos:02}"
-    users = User.objects.filter(is_active=True).order_by('first_name')
 
     context = {
         'form': form,
         'ot': ot,
-        'gastos': gastos,
-        'total_gastos': total_gastos,
         'total_horas_registradas': total_horas_registradas,
-        'users': users,
     }
     return render(request, 'proyecto_detallado.html', context)
 

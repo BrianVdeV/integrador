@@ -315,69 +315,8 @@ class CalendarioView(APIView):
                             "allDay": True,
                             "className": "bg-secondary"
                         })
-        calendario.extend(self.get_vacaciones())
         serializer = CalendarioSerializer(calendario, many=True)
         return Response(serializer.data)
-
-    def get_vacaciones(self):
-        """Método auxiliar para calcular vacaciones"""
-        usuarios = User.objects.filter(is_active=True).exclude(id__in=[2])
-        vacaciones = []
-
-        # Usuarios con vacaciones manuales
-        vacaciones_personalizadas = {
-            41: [("2025-02-21", "2025-02-21"), ("2025-03-17", "2025-03-23"),
-                 ("2025-08-21", "2025-08-28"), ("2025-09-15", "2025-09-21")],
-            1:  [("2025-05-15", "2025-05-22")],  # Jorge
-            31: [("2025-10-20", "2025-10-27")],   # Betci
-            53: [("2025-09-29", "2025-10-05")]   # Elizabeth
-        }
-
-        for user in usuarios:
-            if not user.date_joined:
-                continue
-
-            fecha_inicio = user.date_joined.date()
-            fechas_vacaciones = []
-            num_vacaciones = 3 if user.id == 41 else 2
-
-            if user.id in vacaciones_personalizadas:
-                ult_fecha_manual = None
-                for start, end in vacaciones_personalizadas[user.id]:
-                    fechas_vacaciones.append((start, end))
-                    ult_fecha_manual = datetime.strptime(
-                        end, "%Y-%m-%d").date()
-
-                fecha_vacaciones = ult_fecha_manual + \
-                    timedelta(
-                        days=180) if ult_fecha_manual else fecha_inicio + timedelta(days=180)
-            else:
-                fecha_vacaciones = fecha_inicio + timedelta(days=180)
-
-            while len(fechas_vacaciones) < num_vacaciones:
-                start_date = fecha_vacaciones
-                end_date = start_date + timedelta(days=7)
-                fechas_vacaciones.append((start_date.strftime(
-                    "%Y-%m-%d"), end_date.strftime("%Y-%m-%d")))
-                fecha_vacaciones += timedelta(days=180)
-
-            for start, end in fechas_vacaciones:
-                vacaciones.append({
-                    "id": uuid.uuid4().int >> 64,
-                    "username": user.username,
-                    "title": f"🌴 {user.username} (Vacaciones)",
-                    "start": start,
-                    "end": end,
-                    "descripcion": f"Vacaciones de {user.username} del {start} al {end}",
-                    "usuario": user.username,
-                    "allDay": True,
-                    "className": "bg-success",
-                    "backgroundColor": "#0acf97",
-                    "borderColor": "#0acf97",
-                    "textColor": "#fff",
-                })
-
-        return vacaciones
 
 
 class NotificacionesView(APIView):

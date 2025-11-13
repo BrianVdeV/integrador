@@ -1,173 +1,171 @@
-  {% extends 'base.html' %}
-  {% block content %}
-  <div class="row">
-    <div class="col-12">
-      <div class="page-title-box">
-        <div class="page-title-right">
-          {% if request.user.is_superuser %}
-          <a data-toggle="modal" data-bs-target="#mdlCreate" data-bs-toggle="modal" class="btn btn-danger rounded-pill mb-3">
-            <i class="mdi mdi-plus"></i>Crear nuevo proyecto
-          </a>
-          {% endif %}
+{% extends 'base.html' %} {% block content %}
+<div class="row">
+  <div class="col-12">
+    <div class="page-title-box">
+      <div class="page-title-right">
+        {% if request.user.is_superuser %}
+        <a data-toggle="modal" data-bs-target="#mdlCreate" data-bs-toggle="modal" class="btn btn-danger rounded-pill mb-3"> <i class="mdi mdi-plus"></i>Crear nuevo proyecto </a>
+        {% endif %}
+      </div>
+      <h4 class="page-title">Proyectos</h4>
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-body">
+        <div class="row mb-2">
+          <div class="col-sm-12">
+            <div class="text-sm-end">
+              <a href="../api/reportes-pdf/?report_type=R1" class="btn btn-light mb-2">Export</a>
+            </div>
+          </div>
+          <!-- end col-->
         </div>
-        <h4 class="page-title">Proyectos</h4>
+        <table id="table" class="table table-sm tb-hover dt-responsive w-100">
+          <thead>
+            <tr>
+              <th>OT</th>
+              <th>Avance</th>
+              <th>Inicio</th>
+              <th>Titulo</th>
+              <th>Estado</th>
+              <th>Acceso</th>
+              <th>Total de Horas</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
       </div>
     </div>
   </div>
+</div>
 
-  <div class="row">
-    <div class="col-12">
-      <div class="card">
-        <div class="card-body">
-          <table id="table" class="table table-sm tb-hover dt-responsive w-100">
-            <thead>
-              <tr>
-                <th>OT</th>
-                <th>Avance</th>
-                <th>Inicio</th>
-                <th>Titulo</th>
-                <th>Estado</th>
-                <th>Acceso</th>
-                <th>Total de Horas</th>
-              </tr>
-            </thead>
-            <tbody>
-              </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  {% if request.user.is_superuser %}
-  {% include "partials/_modals/modal_add_proyecto.html" %}
-  {% endif %}
-
-  {% endblock %}
-
-  {% block scripts %}
+{% if request.user.is_superuser %} {% include "partials/_modals/modal_add_proyecto.html" %} {% endif %} {% endblock %} {% block scripts %}
 <script>
-    const baseProyectoUrl = "{% url 'proyecto_detalle' 0 %}".replace("/0/", "/");
-    $(document).ready(function () {
-      $("#table").DataTable({
-        language: {
-          url: "https://cdn.datatables.net/plug-ins/2.2.1/i18n/es-MX.json",
-        },
-        pageLength: 50,
-        serverSide: true,
-        processing: true, // Corregido de 'procesing' a 'processing'
-        ordering: true,
-        order: [[0, "desc"]],
-        ajax: {
-          url: "../api/ots/",
-        },
+  const baseProyectoUrl = "{% url 'proyecto_detalle' 0 %}".replace("/0/", "/");
+  $(document).ready(function () {
+    $("#table").DataTable({
+      language: {
+        url: "https://cdn.datatables.net/plug-ins/2.2.1/i18n/es-MX.json",
+      },
+      pageLength: 50,
+      serverSide: true,
+      processing: true, // Corregido de 'procesing' a 'processing'
+      ordering: true,
+      order: [[0, "desc"]],
+      ajax: {
+        url: "../api/ots/",
+      },
 
-        // --- INICIO DE LA MODIFICACIÓN COMPLETA ---
-        columns: [
-          // Columna 1: OT
-          {
-            data: "id_ot_str",
-            render: function (data, type, row) {
-              return `<a class="text-muted" href="${baseProyectoUrl}${row.id_ot}/">
+      // --- INICIO DE LA MODIFICACIÓN COMPLETA ---
+      columns: [
+        // Columna 1: OT
+        {
+          data: "id_ot_str",
+          render: function (data, type, row) {
+            return `<a class="text-muted" href="${baseProyectoUrl}${row.id_ot}/">
               <i class="mdi mdi-record" style="color: ${row.color}"></i> ${data}</a>`;
-            },
           },
+        },
 
-          // Columna 2: Avance (NUEVA LÓGICA CON BARRA DE PROGRESO)
-          {
-            data: "avance", // Usamos el nuevo campo 'avance' de la API
-            render: function (data, type, row) {
-              let percentage = data ? parseInt(data, 10) : 0;
-              return `
+        // Columna 2: Avance (NUEVA LÓGICA CON BARRA DE PROGRESO)
+        {
+          data: "avance", // Usamos el nuevo campo 'avance' de la API
+          render: function (data, type, row) {
+            let percentage = data ? parseInt(data, 10) : 0;
+            return `
                 <div class="progress" style="height: 20px;">
                   <div class="progress-bar" role="progressbar" style="width: ${percentage}%;" aria-valuenow="${percentage}" aria-valuemin="0" aria-valuemax="100">${percentage}%</div>
                 </div>
               `;
+          },
+        },
+
+        // Columna 3: Inicio
+        {
+          data: "inicio",
+          render: function (data) {
+            return new Date(data).toLocaleDateString();
+          },
+        },
+
+        // Columna 4: Titulo
+        { data: "expediente_titles" },
+
+        // Columna 5: Estado (LÓGICA MOVIDA A SU POSICIÓN CORRECTA)
+        {
+          data: "estado",
+          render: function (data, type, row) {
+            let badgeClass = "";
+            if (data === "Finalizado") {
+              badgeClass = "badge bg-success";
+            } else if (data === "Activo") {
+              badgeClass = "badge bg-primary";
+            } else {
+              badgeClass = "badge bg-secondary"; // Color por defecto
             }
+            return `<span class="${badgeClass}">${data}</span>`;
           },
+        },
 
-          // Columna 3: Inicio
-          {
-            data: "inicio",
-            render: function (data) {
-              return new Date(data).toLocaleDateString();
-            },
+        // Columna 6: Acceso
+        {
+          data: "privado",
+          render: function (data) {
+            return data === 1 ? "Privado" : "Público";
           },
+        },
 
-          // Columna 4: Titulo
-          { data: "expediente_titles" },
-
-          // Columna 5: Estado (LÓGICA MOVIDA A SU POSICIÓN CORRECTA)
-          {
-            data: "estado",
-            render: function (data, type, row) {
-              let badgeClass = '';
-              if (data === 'Finalizado') {
-                badgeClass = 'badge bg-success';
-              } else if (data === 'Activo') {
-                badgeClass = 'badge bg-primary';
-              } else {
-                badgeClass = 'badge bg-secondary'; // Color por defecto
-              }
-              return `<span class="${badgeClass}">${data}</span>`;
-            }
-          },
-
-          // Columna 6: Acceso
-          {
-            data: "privado",
-            render: function (data) {
-              return data === 1 ? "Privado" : "Público";
-            },
-          },
-          
-          // Columna 7: Total de Horas
-          { data: "total_horas_proyecto" },
-        ],
-        // --- FIN DE LA MODIFICACIÓN COMPLETA ---
-      });
+        // Columna 7: Total de Horas
+        { data: "total_horas_proyecto" },
+      ],
+      // --- FIN DE LA MODIFICACIÓN COMPLETA ---
     });
+  });
 
-    document.addEventListener("DOMContentLoaded", function () {
-      const tipoProyectoSelect = document.getElementById("txtTipoProyecto");
-      const proyectoInput = document.getElementById("txtProyecto");
-      const colorInput = document.getElementById("txtColor");
+  document.addEventListener("DOMContentLoaded", function () {
+    const tipoProyectoSelect = document.getElementById("txtTipoProyecto");
+    const proyectoInput = document.getElementById("txtProyecto");
+    const colorInput = document.getElementById("txtColor");
 
-      const coloresPorCodigo = {
-        DEC: "#00a5a5",
-        BUS: "#f56f36",
-        IND: "#727cf5",
-        VIS: "#8ec321",
-        PLA: "#ffaf00",
-        LIC: "#0acf97",
-      };
+    const coloresPorCodigo = {
+      DEC: "#00a5a5",
+      BUS: "#f56f36",
+      IND: "#727cf5",
+      VIS: "#8ec321",
+      PLA: "#ffaf00",
+      LIC: "#0acf97",
+    };
 
-      const colorPorDefecto = "#e5e5e5";
+    const colorPorDefecto = "#e5e5e5";
 
-      if (tipoProyectoSelect) {
-        tipoProyectoSelect.addEventListener("change", function () {
-          const selectedOption = tipoProyectoSelect.options[tipoProyectoSelect.selectedIndex];
-          const codigo = selectedOption.getAttribute("data-codigo");
+    if (tipoProyectoSelect) {
+      tipoProyectoSelect.addEventListener("change", function () {
+        const selectedOption = tipoProyectoSelect.options[tipoProyectoSelect.selectedIndex];
+        const codigo = selectedOption.getAttribute("data-codigo");
 
-          if (codigo) {
-            proyectoInput.value = codigo + "-";
-            proyectoInput.focus();
+        if (codigo) {
+          proyectoInput.value = codigo + "-";
+          proyectoInput.focus();
 
-            let nuevoColor = colorPorDefecto;
-            for (const clave in coloresPorCodigo) {
-              if (codigo.includes(clave)) {
-                nuevoColor = coloresPorCodigo[clave];
-                break;
-              }
+          let nuevoColor = colorPorDefecto;
+          for (const clave in coloresPorCodigo) {
+            if (codigo.includes(clave)) {
+              nuevoColor = coloresPorCodigo[clave];
+              break;
             }
-
-            colorInput.value = nuevoColor;
-          } else {
-            colorInput.value = colorPorDefecto;
           }
-        });
-      }
-    });
+
+          colorInput.value = nuevoColor;
+        } else {
+          colorInput.value = colorPorDefecto;
+        }
+      });
+    }
+  });
 </script>
 
 {% endblock %}

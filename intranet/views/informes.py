@@ -1,16 +1,30 @@
 """Muestra las diferentes vistas de los informes de actividades."""
+import io
+import os
 from datetime import datetime, timedelta
 from django.shortcuts import render
 from django.http import JsonResponse, HttpResponse
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
+# Funciones de agregación de Django
+from django.conf import settings
+from django.db.models import Count, Max
+from django.db.models.functions import TruncMonth
+from rest_framework.views import APIView
+from rest_framework.response import Response
 from openpyxl import Workbook
 from openpyxl.worksheet.table import Table, TableStyleInfo
 from openpyxl.styles import Font, Alignment, Border, Side, PatternFill
+# Utilidades de ReportLab
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.units import cm
+from reportlab.lib import colors
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
 from auth.models import Colaborador, Area
-from intranet.models import Expedientes
-from kanban.models import Actividades
+from intranet.models import Expedientes, Ot
+from kanban.models import Actividades, Tarea
 from kanban.forms import ActividadesForm
 
 
@@ -348,3 +362,194 @@ def export_resumen_excel(request):
 
     wb.save(response)
     return response
+
+
+def draw_header(p, width, height, title_text):
+    """
+    Dibuja el logo y el título en la cabecera de una página del canvas.
+    """
+    # Definir la ruta absoluta al logo
+    # Asume que 'static' está en el BASE_DIR del proyecto
+    LOGO_PATH = os.path.join(settings.BASE_DIR, 'static', 'images', 'logo.png')
+
+    # Título
+    p.setFont("Helvetica-Bold", 16)
+    p.drawCentredString(width / 2.0, height - 2*cm, title_text)
+
+    # Dibujar el Logo (manejando si no lo encuentra)
+    try:
+        # Dibuja el logo en la esquina superior izquierda
+        # (2cm del borde izq, 3cm del borde sup)
+        # Damos un alto de 1.5cm y el ancho se ajusta automáticamente
+        p.drawImage(LOGO_PATH, 2*cm, height - 3*cm, height=1.5 *
+                    cm, preserveAspectRatio=True, mask='auto')
+    except IOError:
+        # Si no se encuentra el logo, dibuja un texto de reemplazo
+        p.setFont("Helvetica", 8)
+        p.setFillColorRGB(0.8, 0.2, 0.2)  # Color rojo
+        p.drawString(2*cm, height - 2*cm, "[Logo no econtrado]")
+        p.setFillColorRGB(0, 0, 0)  # Resetear color
+
+# --- Funciones de Generación de PDF (Actualizadas) ---
+
+
+def generar_reporte_r1(response, data_r1):
+    """
+    Genera el PDF para el Reporte R1: Proyectos por Mes.
+    """
+    p = canvas.Canvas(response, pagesize=A4)
+    width, height = A4  # Obtener dimensiones
+
+    # --- MODIFICADO: Llamar a la cabecera ---
+    draw_header(p, width, height, "R1: Proyectos Registrados por Mes")
+
+    # Cabeceras de la tabla
+    p.setFont("Helvetica-Bold", 12)
+    p.drawString(3*cm, height - 4*cm, "Mes")
+    p.drawString(10*cm, height - 4*cm, "Cantidad de Proyectos")
+    p.line(3*cm, height - 4.2*cm, width - 3*cm, height - 4.2*cm)
+
+    # Datos
+    p.setFont("Helvetica", 11)
+    y_position = height - 5*cm
+
+    for item in data_r1:
+        if y_position < 4*cm:  # Salto de página
+            p.showPage()
+            # --- MODIFICADO: Dibujar cabecera en la nueva página ---
+            draw_header(p, width, height,
+                        "R1: Proyectos Registrados por Mes (Cont.)")
+            p.setFont("Helvetica", 11)
+            y_position = height - 4*cm  # Reiniciar Y en la nueva página
+
+        mes_str = item['month'].strftime('%Y-%m (%B)')
+        count_str = str(item['count'])
+
+        p.drawString(3*cm, y_position, mes_str)
+        p.drawString(10*cm, y_position, count_str)
+        y_position -= 1*cm
+
+    p.showPage()
+    p.save()
+    return response
+
+
+def generar_reporte_r2(response, data_r2):
+    """
+    Genera el PDF para el Reporte R2: Seguimiento de Proyectos.
+    """
+    p = canvas.Canvas(response, pagesize=A4)
+    width, height = A4
+
+    # --- MODIFICADO: Llamar a la cabecera ---
+    draw_header(p, width, height, "R2: Seguimiento y Estado de Proyectos")
+
+    y_position = height - 4*cm
+
+    for proyecto in data_r2:
+        tareas = proyecto.tarea_set.all().order_by('orden')
+        fecha_fin_estimada = tareas.aggregate(
+            max_vencimiento=Max('vencimiento')
+        )['max_vencimiento']
+
+        # Estimamos el espacio necesario
+        espacio_necesario = 3*cm + (len(tareas) * 0.6*cm)
+
+        if y_position < (espacio_necesario + 4*cm):  # 4cm = margen inferior
+            p.showPage()
+            # --- MODIFICADO: Dibujar cabecera en la nueva página ---
+            draw_header(p, width, height, "R2: Seguimiento (Continuación)")
+            p.setFont("Helvetica", 11)  # Resetear fuente
+            y_position = height - 4*cm  # Reiniciar Y
+
+        # --- Dibujar Proyecto ---
+        p.setFont("Helvetica-Bold", 14)
+        p.setFillColorRGB(0.1, 0.1, 0.4)
+        p.drawString(3*cm, y_position,
+                     f"Proyecto: {proyecto.nombre} (ID: {proyecto.id_ot})")
+        y_position -= 1*cm
+
+        p.setFont("Helvetica", 11)
+        p.setFillColorRGB(0, 0, 0)
+        p.drawString(3.5*cm, y_position, f"Estado General: {proyecto.estado}")
+        y_position -= 0.6*cm
+
+        fecha_str = fecha_fin_estimada.strftime(
+            '%Y-%m-%d') if fecha_fin_estimada else 'No definida'
+        p.drawString(3.5*cm, y_position, f"Fecha Estimada Fin: {fecha_str}")
+        y_position -= 0.8*cm
+
+        # --- Dibujar Tareas (Etapas) ---
+        p.setFont("Helvetica-Bold", 11)
+        p.drawString(4*cm, y_position, "Etapas / Tareas del Proyecto:")
+        y_position -= 0.6*cm
+
+        if not tareas:
+            p.setFont("Helvetica-Oblique", 10)
+            p.drawString(4.5*cm, y_position, "- Sin tareas registradas.")
+            y_position -= 0.6*cm
+        else:
+            p.setFont("Helvetica", 10)
+            for tarea in tareas:
+                if tarea.estado == 'done':
+                    p.setFillColorRGB(0, 0.5, 0)
+                elif tarea.estado == 'in_progress':
+                    p.setFillColorRGB(0.8, 0.5, 0)
+                else:
+                    p.setFillColorRGB(0, 0, 0)
+
+                p.drawString(
+                    4.5*cm, y_position, f"- {tarea.titulo} (Estado: {tarea.get_estado_display()})")
+                y_position -= 0.6*cm
+
+        p.setFillColorRGB(0, 0, 0)
+        p.line(3*cm, y_position, width - 3*cm, y_position)
+        y_position -= 0.5*cm
+
+    p.showPage()
+    p.save()
+    return response
+
+
+# --- La APIView (Sin cambios) ---
+
+class ReportePDFView(APIView):
+    """
+    Vista para generar reportes R1 y R2 en PDF.
+
+    Uso:
+    GET /api/reportes-pdf/?report_type=R1
+    GET /api/reportes-pdf/?report_type=R2
+    """
+    # permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        report_type = request.query_params.get('report_type', None)
+
+        if report_type == 'R1':
+            data_r1 = Ot.objects.annotate(
+                month=TruncMonth('inicio')
+            ).values(
+                'month'
+            ).annotate(
+                count=Count('id_ot')
+            ).order_by('month')
+
+            response = HttpResponse(content_type='application/pdf')
+            response['Content-Disposition'] = 'attachment; filename="R1_proyectos_por_mes.pdf"'
+
+            return generar_reporte_r1(response, data_r1)
+
+        elif report_type == 'R2':
+            proyectos = Ot.objects.filter(estado='Activo').prefetch_related(
+                'tarea_set').order_by('inicio')
+            response = HttpResponse(content_type='application/pdf')
+            response['Content-Disposition'] = 'attachment; filename="R2_seguimiento_proyectos.pdf"'
+
+            return generar_reporte_r2(response, proyectos)
+
+        else:
+            return Response(
+                {"error": "Debe proporcionar un 'report_type' válido en los parámetros (ej. ?report_type=R1)"},
+                status=400
+            )
