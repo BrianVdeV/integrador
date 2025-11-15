@@ -508,16 +508,7 @@
       return;
     }
 
-    let now = moment();
-    let startTime = moment().set({ hour: 8, minute: 0 });
-    let endTime = moment().set({ hour: 18, minute: 35 });
 
-    if (now.isBefore(startTime)) {
-      alert("Formulario enviado antes de las 08:00.");
-    } else if (now.isAfter(endTime)) {
-      alert("El formulario solo se puede enviar entre las 08:00 y las 18:35.");
-      return;
-    }
 
     submitButton.prop("disabled", true);
 

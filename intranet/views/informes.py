@@ -108,6 +108,8 @@ def export_actividades_excel(request):
         showRowStripes=True,
         showColumnStripes=False
     )
+    tabla = Table(ref=tabla_rango)
+    tabla.displayName = "TablaActividades"
     tabla.tableStyleInfo = estilo
     for row in range(1, ws.max_row + 1):  # Recorre todas las filas existentes
         ws.row_dimensions[row].height = 25
@@ -520,6 +522,7 @@ class ReportePDFView(APIView):
     Uso:
     GET /api/reportes-pdf/?report_type=R1
     GET /api/reportes-pdf/?report_type=R2
+    GET /api/reportes-pdf/?report_type=R2&ot=123  <-- NUEVO
     """
     # permission_classes = [IsAuthenticated]
 
@@ -527,6 +530,7 @@ class ReportePDFView(APIView):
         report_type = request.query_params.get('report_type', None)
 
         if report_type == 'R1':
+            # ... (La lógica de R1 no cambia) ...
             data_r1 = Ot.objects.annotate(
                 month=TruncMonth('inicio')
             ).values(
@@ -541,12 +545,43 @@ class ReportePDFView(APIView):
             return generar_reporte_r1(response, data_r1)
 
         elif report_type == 'R2':
-            proyectos = Ot.objects.filter(estado='Activo').prefetch_related(
-                'tarea_set').order_by('inicio')
-            response = HttpResponse(content_type='application/pdf')
-            response['Content-Disposition'] = 'attachment; filename="R2_seguimiento_proyectos.pdf"'
 
+            # --- LÓGICA MODIFICADA PARA R2 ---
+
+            # 1. Leer el parámetro 'ot' de la URL
+            ot_id = request.query_params.get('ot', None)
+
+            # 2. Empezar el queryset base
+            proyectos = Ot.objects.all().prefetch_related('tarea_set')
+
+            # 3. Definir un nombre de archivo por defecto
+            filename = "R2_seguimiento_proyectos.pdf"
+
+            if ot_id:
+                # 4a. Si se proveyó un 'ot', filtrar por ese ID
+                proyectos = proyectos.filter(id_ot=ot_id)
+                filename = f"R2_seguimiento_ot_{ot_id}.pdf"
+
+                # Buena práctica: verificar si esa OT existe
+                if not proyectos.exists():
+                    return Response(
+                        {"error": f"La OT con id {ot_id} no fue encontrada."},
+                        status=404
+                    )
+            else:
+                # 4b. Si NO se proveyó 'ot', mantener el comportamiento original
+                # (mostrar todos los proyectos activos)
+                proyectos = proyectos.filter(
+                    estado='Activo').order_by('inicio')
+                filename = "R2_seguimiento_proyectos_activos.pdf"
+
+            # 5. Preparar la respuesta HTTP con el nombre de archivo dinámico
+            response = HttpResponse(content_type='application/pdf')
+            response['Content-Disposition'] = f'attachment; filename="{filename}"'
+
+            # 6. Generar el PDF (la función 'generar_reporte_r2' no cambia)
             return generar_reporte_r2(response, proyectos)
+            # --- FIN DE LA LÓGICA MODIFICADA ---
 
         else:
             return Response(
