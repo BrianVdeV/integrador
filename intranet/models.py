@@ -23,7 +23,7 @@ class TipOt(models.Model):
 
 class Ot(models.Model):
     """Proyectos"""
-    id_ot = models.IntegerField(primary_key=True)
+    id = models.IntegerField(primary_key=True)
     nombre = models.CharField(max_length=125)
     inicio = models.DateTimeField(blank=True, null=True)
     estado = models.CharField(default='Activo', max_length=45)
@@ -35,13 +35,8 @@ class Ot(models.Model):
     monto_total = models.DecimalField(
         max_digits=10, decimal_places=2, null=True, blank=True)
 
-    class Meta:
-        """ Meta """
-        managed = False
-        db_table = 'OT'
-
     def __str__(self):
-        return str(self.id_ot) + ' - ' + self.nombre
+        return str(self.id) + ' - ' + self.nombre
 
 
 class Expedientes(models.Model):
@@ -62,11 +57,6 @@ class Expedientes(models.Model):
     presentacion = models.DateField(blank=True, null=True)
     reingreso = models.DateField(blank=True, null=True)
     vencimiento = models.DateField(blank=True, null=True)
-
-    class Meta:
-        """ Meta """
-        managed = False
-        db_table = 'expedientes'
 
     def __str__(self):
         presentacion_year = self.presentacion.strftime(

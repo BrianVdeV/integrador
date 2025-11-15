@@ -1,7 +1,7 @@
 """Formularios"""
 from django import forms
 from django.contrib.auth.models import User
-from .models import Ot,Expedientes
+from .models import Ot, Expedientes
 
 
 class EventosForm(forms.Form):
@@ -29,7 +29,7 @@ class EventosForm(forms.Form):
         required=False
     )
     ot = forms.ModelChoiceField(
-        queryset=Ot.objects.filter(estado='Activo').order_by('-id_ot'),
+        queryset=Ot.objects.filter(estado='Activo').order_by('-id'),
         widget=forms.Select(
             attrs={"class": "form-select", "id": "sltOt"}),
         required=False,
@@ -44,11 +44,10 @@ class EventosForm(forms.Form):
         attrs={"class": "form-control", "id": "txtDescripcion", "rows": "2"}), required=False)
 
 
-
 class ExpedientesForm(forms.Form):
     """Expedientes"""
     ot = forms.ModelChoiceField(
-        queryset=Ot.objects.filter(estado='Activo').order_by('-id_ot'),
+        queryset=Ot.objects.filter(estado='Activo').order_by('-id'),
         widget=forms.Select(
             attrs={"class": "form-select", "id": "ot"}),
         empty_label=None,

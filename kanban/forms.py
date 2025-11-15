@@ -18,7 +18,7 @@ class TareaForm(forms.Form):
             attrs={"class": "form-select", "id": "sltPrioridad"})
     )
     ot = forms.ModelChoiceField(
-        queryset=Ot.objects.filter(estado='Activo').order_by('-id_ot'),
+        queryset=Ot.objects.filter(estado='Activo').order_by('-id'),
         widget=forms.Select(
             attrs={"class": "form-select", "id": "sltOt"}),
         required=False,
@@ -97,9 +97,9 @@ class ActividadesForm(forms.Form):
         super().__init__(*args, **kwargs)
 
         if user and user.is_superuser:
-            qs = Ot.objects.filter(estado="Activo").order_by("-id_ot")
+            qs = Ot.objects.filter(estado="Activo").order_by("-id")
         else:
             qs = Ot.objects.filter(
-                estado="Activo", privado=0).order_by("-id_ot")
+                estado="Activo", privado=0).order_by("-id")
 
         self.fields["ot"].queryset = qs

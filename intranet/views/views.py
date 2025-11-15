@@ -47,7 +47,7 @@ def list_actividades_index(request):
     if search_value:
         queryset = queryset.filter(
             Q(comentario__icontains=search_value) |
-            Q(ot__id_ot__icontains=search_value) |
+            Q(ot__id__icontains=search_value) |
             Q(tarea__titulo__icontains=search_value)
         )
 
@@ -66,7 +66,7 @@ def list_actividades_index(request):
             'expediente_numero': expediente.numero if expediente else None,
             'expediente_reingreso': expediente.reingreso.strftime('%Y-%m-%d') if expediente and expediente.reingreso else None,
             'expediente_vencimiento': expediente.vencimiento.strftime('%Y-%m-%d') if expediente and expediente.vencimiento else None,
-            'ot': f"{actividad.ot.id_ot} - {actividad.ot.nombre}" if actividad.ot else None,
+            'ot': f"{actividad.ot.id} - {actividad.ot.nombre}" if actividad.ot else None,
             'inicio': actividad.inicio.strftime('%H:%M') if actividad.inicio else None,
             'fin': actividad.fin.strftime('%H:%M') if actividad.fin else None,
             'fecha': actividad.inicio.strftime('%Y-%m-%d') if actividad.inicio else None,
@@ -178,7 +178,7 @@ def proyectos(request):
             nac_ot_str = request.POST.get('txtFecha', None)
 
             ot = Ot(
-                id_ot=request.POST.get('txtOT', None),
+                id=request.POST.get('txtOT', None),
                 nombre=request.POST.get('txtProyecto', None),
                 color=request.POST.get('txtColor', None),
                 inicio=nac_ot_str,
@@ -189,15 +189,15 @@ def proyectos(request):
             messages.success(request, "OT y sus ingresos creados con éxito.")
         except Exception as e:
             messages.error(request, f"Error: {str(e)}")
-        return redirect('proyecto_detalle', id_ot=ot.id_ot)
+        return redirect('proyecto_detalle', id=ot.id)
 
     tipos_proyecto = TipOt.objects.all().order_by('nom_tipo')
-    ots_list = Ot.objects.all().order_by('-id_ot')
+    ots_list = Ot.objects.all().order_by('-id')
     ots = []
 
     for ot in ots_list:
         expediente = Expedientes.objects.filter(
-            ot=ot.id_ot).order_by('-id').first()
+            ot=ot.id).order_by('-id').first()
         ot.expediente = expediente
         ots.append(ot)
 
@@ -212,7 +212,7 @@ def proyectos(request):
 
 def edit_proyecto(request, id_ot):
     """ Editar Proyecto """
-    ot = get_object_or_404(Ot, id_ot=id_ot)
+    ot = get_object_or_404(Ot, id=id_ot)
     if request.method == 'POST':
         nombre = request.POST.get('txtNombre')
         estado = request.POST.get('sltEstado')
@@ -235,9 +235,9 @@ def edit_proyecto(request, id_ot):
 def delete_proyecto(request):
     """Eliminar Proyecto"""
     if request.method == 'POST':
-        id_ot = request.POST.get('id', None)
+        id = request.POST.get('id', None)
         try:
-            ot = Ot.objects.get(id_ot=id_ot)
+            ot = Ot.objects.get(id=id)
             ot.delete()
             messages.success(request, "OT eliminado con éxito")
         except Ot.DoesNotExist:
@@ -283,7 +283,7 @@ def obtener_notificaciones(request):
         Q(vencimiento__range=[today, seven_days_later]) |
         Q(reingreso__range=[today, seven_days_later])
     ).select_related('ot')
-        .values('ot__id_ot', 'vencimiento', 'reingreso', 'entidad', 'ot__nombre', 'estado')
+        .values('ot__id', 'vencimiento', 'reingreso', 'entidad', 'ot__nombre', 'estado')
         .order_by('vencimiento'))
     activos = User.objects.filter(is_active=True).values_list('id', flat=True)
     # Obtener cumpleaños de colaboradores

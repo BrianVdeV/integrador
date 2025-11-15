@@ -56,7 +56,7 @@ def export_actividades_excel(request):
             Q(descripcion__icontains=search_value) |
             Q(user__username__icontains=search_value) |
             Q(ot__nombre__icontains=search_value) |
-            Q(ot__id_ot__icontains=search_value)
+            Q(ot__id__icontains=search_value)
         )
 
     if start_date and end_date:
@@ -84,7 +84,7 @@ def export_actividades_excel(request):
             ot=actividad.ot).order_by('-id').first()
 
         ws.append([
-            actividad.ot.id_ot if actividad.ot else None,
+            actividad.ot.id if actividad.ot else None,
             actividad.ot.nombre if actividad.ot else None,
             expediente.estado if expediente else None,
             actividad.tarea.titulo if actividad.tarea else actividad.descripcion,
@@ -256,7 +256,7 @@ def export_resumen_excel(request):
         horas_totales_decimal = horas_totales.total_seconds(
         ) / (24 * 3600)  # Convertir segundos a fracción del día
         row = [
-            ot.id_ot if ot else None,
+            ot.id if ot else None,
             ot.nombre if ot else None,
             actividades_texto,
             actividades_ot[0].user.username if actividades_ot[0].user else None,
@@ -468,7 +468,7 @@ def generar_reporte_r2(response, data_r2):
         p.setFont("Helvetica-Bold", 14)
         p.setFillColorRGB(0.1, 0.1, 0.4)
         p.drawString(3*cm, y_position,
-                     f"Proyecto: {proyecto.nombre} (ID: {proyecto.id_ot})")
+                     f"Proyecto: {proyecto.nombre} (ID: {proyecto.id})")
         y_position -= 1*cm
 
         p.setFont("Helvetica", 11)
@@ -536,7 +536,7 @@ class ReportePDFView(APIView):
             ).values(
                 'month'
             ).annotate(
-                count=Count('id_ot')
+                count=Count('id')
             ).order_by('month')
 
             response = HttpResponse(content_type='application/pdf')
@@ -559,7 +559,7 @@ class ReportePDFView(APIView):
 
             if ot_id:
                 # 4a. Si se proveyó un 'ot', filtrar por ese ID
-                proyectos = proyectos.filter(id_ot=ot_id)
+                proyectos = proyectos.filter(id=ot_id)
                 filename = f"R2_seguimiento_ot_{ot_id}.pdf"
 
                 # Buena práctica: verificar si esa OT existe

@@ -51,7 +51,7 @@ class ExpedientesViewSet(viewsets.ModelViewSet):
 
 class OtViewSet(viewsets.ModelViewSet):
     """Lista todas las ot"""
-    queryset = Ot.objects.all().order_by('-id_ot')
+    queryset = Ot.objects.all().order_by('-id')
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = OtSerializer
     pagination_class = LargeResultsSetPagination
@@ -60,7 +60,7 @@ class OtViewSet(viewsets.ModelViewSet):
         queryset = super().get_queryset()
         search = self.request.query_params.get('search', None)
         if search:
-            queryset = queryset.filter(id_ot__icontains=search)
+            queryset = queryset.filter(id__icontains=search)
         return queryset
 
 
@@ -71,7 +71,7 @@ class OtActivoViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         if self.request.user.is_superuser:
-            ots = Ot.objects.filter(estado="Activo").order_by('-id_ot')
+            ots = Ot.objects.filter(estado="Activo").order_by('-id')
             return ots
         return ots.filter(privado=0)
 
@@ -81,7 +81,7 @@ class OTListAPIView(ListAPIView):
     pagination_class = LargeResultsSetPagination
 
     def get_queryset(self):
-        return Ot.objects.all().order_by('-id_ot')
+        return Ot.objects.all().order_by('-id')
 
     def list(self, request, *args, **kwargs):
         """Modifica la respuesta para que sea compatible con DataTables"""
@@ -95,7 +95,7 @@ class OTListAPIView(ListAPIView):
         if search_value:
             queryset = queryset.filter(
                 Q(nombre__icontains=search_value) |
-                Q(id_ot__icontains=search_value)
+                Q(id__icontains=search_value)
             )
 
         total_count = queryset.count()
@@ -224,7 +224,7 @@ class CalendarioView(APIView):
                 "title": evento.titulo,
                 "start": evento.inicio,
                 "end": evento.fin,
-                "ot": evento.ot.id_ot if evento.ot else None,
+                "ot": evento.ot.id if evento.ot else None,
                 "usuario": evento.usuario.username if evento.usuario else None,
                 "descripcion": evento.descripcion_evento,
                 "allDay": evento.allday,
@@ -239,7 +239,7 @@ class CalendarioView(APIView):
             if expediente.reingreso:
                 calendario.append({
                     "id": expediente.id,
-                    "title": f"OT: {expediente.ot.id_ot}",
+                    "title": f"OT: {expediente.ot.id}",
                     "start": expediente.reingreso,
                     "ot": expediente.ot,
                     "descripcion": f"Estado: {expediente.estado}",
@@ -249,7 +249,7 @@ class CalendarioView(APIView):
             if expediente.vencimiento:
                 calendario.append({
                     "id": expediente.id,
-                    "title": f"OT {expediente.ot.id_ot}",
+                    "title": f"OT {expediente.ot.id}",
                     "start": expediente.vencimiento,
                     "ot": expediente.ot,
                     "descripcion": f"Estado: {expediente.estado}",
@@ -271,7 +271,7 @@ class CalendarioView(APIView):
                 # ----------------------------------
                 "title": f"⚠️ TAREA: {tarea.titulo}",
                 "start": tarea.vencimiento,
-                "ot": tarea.ot.id_ot if tarea.ot else None,
+                "ot": tarea.ot.id if tarea.ot else None,
                 "usuario": tarea.user.username if tarea.user else None,
                 "descripcion": f"Prioridad: Muy Urgente. {tarea.descripcion or ''}",
                 "allDay": True,

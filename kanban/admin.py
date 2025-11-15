@@ -8,7 +8,7 @@ class TareaAdmin(admin.ModelAdmin):
     list_display = ['id', 'titulo', 'user', 'ot', 'estado',
                     'vencimiento', 'creado']
     list_filter = ['estado', 'user', 'creado']
-    search_fields = ['titulo', 'descripcion', 'ot__id_ot', 'user__username']
+    search_fields = ['titulo', 'descripcion', 'ot__id', 'user__username']
     readonly_fields = ['creado', 'editado']
     list_editable = ['estado']
     fieldsets = (
@@ -31,7 +31,7 @@ class ActividadesAdmin(admin.ModelAdmin):
     list_display = ['id', 'user', 'inicio', 'fin', 'ot', 'tarea']
     list_filter = ['inicio', 'fin', 'user']
     search_fields = ['comentario', 'user__username',
-                     'tarea__titulo', 'ot__id_ot']
+                     'tarea__titulo', 'ot__id']
 
     fieldsets = (
         ('Detalles', {
