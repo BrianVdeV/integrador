@@ -42,13 +42,6 @@ class EditUserForm(forms.Form):
     username = forms.CharField(
         max_length=50, widget=forms.TextInput(attrs={"class": "form-control", "id": "txtUsuario"}))
 
-    # Campo Área con ChoiceField
-    area_choices = [(area.id, area.nombre) for area in Area.objects.all()]
-    area = forms.ChoiceField(
-        choices=area_choices,
-        widget=forms.Select(attrs={"class": "form-control", "id": "sltArea"})
-    )
-
     # Campo Fecha de Nacimiento
     nac_col = forms.DateField(
         widget=forms.DateInput(
