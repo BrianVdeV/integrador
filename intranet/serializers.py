@@ -16,7 +16,7 @@ class ExpedientesSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
     def get_ot_str(self, obj):
-        """ Método para obtener el id_ot en formato string """
+        """ Método para obtener el id en formato string """
         return str(obj.ot)
 
 
@@ -47,7 +47,7 @@ class OtSerializer(serializers.ModelSerializer):
 
     def get_id_ot_str(self, obj):
         """ Método para obtener el id_ot en formato string """
-        return str(obj.id_ot)+" - "+obj.nombre
+        return str(obj.id)+" - "+obj.nombre
 
 
 class OtDataSerializer(serializers.ModelSerializer):
@@ -63,7 +63,7 @@ class OtDataSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ot
         fields = [
-            'id_ot',
+            'id',
             'id_ot_str',
             'color',
             'inicio',
@@ -90,7 +90,7 @@ class OtDataSerializer(serializers.ModelSerializer):
         return porcentaje
 
     def get_id_ot_str(self, obj):
-        return f"{obj.id_ot} - {obj.nombre}"
+        return f"{obj.id} - {obj.nombre}"
 
     def get_expediente_titles(self, obj):
         expediente = Expedientes.objects.filter(ot=obj).first()

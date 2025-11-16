@@ -23,7 +23,7 @@
                         <i class="mdi mdi-dots-vertical"></i>
                     </button>
                     <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                        <a class="dropdown-item" href="../../api/reportes-pdf/?report_type=R2&ot={{ot.id_ot}}">Exportar PDF</a>
+                        <a class="dropdown-item" href="../../api/reportes-pdf/?report_type=R2&ot={{ot.id}}">Exportar PDF</a>
                         <a class="dropdown-item" href="javascript: void(0);" data-bs-toggle="modal" data-bs-target="#mdlDelete">Eliminar</a>
                     </div>
                 </form>
@@ -105,9 +105,9 @@
                 </div>
             </div>
             <div class="col-lg-6">
-              <form method="post" action="{% url 'edit_proyecto' ot.id_ot %}" id="form-edit-proyecto">
+              <form method="post" action="{% url 'edit_proyecto' ot.id %}" id="form-edit-proyecto">
                 {% csrf_token %}
-                <input type="hidden" name="id_ot" value="{{ot.id_ot}}">
+                <input type="hidden" name="id_ot" value="{{ot.id}}">
                 <div class="mb-3">
                   <label for="txtNombre" class="form-label">Nombre</label>
                   <input type="text" id="txtNombre" name="txtNombre" class="form-control" value="{{ot.nombre}}">
@@ -208,7 +208,7 @@
             order: [],
             rowId: 'id',
             ajax: {
-                url: '{% url "tarea-list" %}?ot={{ot.id_ot}}',
+                url: '{% url "tarea-list" %}?ot={{ot.id}}',
                 dataSrc: 'results'
             },
             columns: [
@@ -269,7 +269,7 @@
                 url: '{% url 'tarea-list' %}',
                 method: "POST",
                 headers: { "X-CSRFToken": csrfToken },
-                data: $(this).serialize() + '&ot={{ot.id_ot}}', 
+                data: $(this).serialize() + '&ot={{ot.id}}', 
                 success: function (res) {
                     $("#table").DataTable().ajax.reload(null, false); 
                     $("#add").modal("hide");
@@ -397,7 +397,7 @@
  var mymap = null; 
 
  $(document).ready(function() {
-     const OT_ID = {{ ot.id_ot }};
+     const OT_ID = {{ ot.id }};
      if ($('#map').length) {
          mymap = L.map('map').setView([-12.0, -77.0], 16);
          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
