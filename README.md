@@ -28,7 +28,7 @@ Planos Peru Intranet es un proyecto web dedicado a la creación y gestión de pl
 
 ## Instalación
 
-Usando la terminal Git Bash Ejecuta los siguientes comandos
+Usando la terminal Git Bash ejecuta los siguientes comandos
 
 1. Clona el repositorio:
    ```bash
@@ -65,5 +65,8 @@ Ejecuta el siguiente comando en Django
 ```bash
 python manage.py runserver
 ```
+
+Usuario: Jorge
+Contraseña: eunacino
 
 Abre tu navegador y visita `http://localhost:8000` para ver la aplicación en funcionamiento.

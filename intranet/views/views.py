@@ -189,7 +189,7 @@ def proyectos(request):
             messages.success(request, "OT y sus ingresos creados con éxito.")
         except Exception as e:
             messages.error(request, f"Error: {str(e)}")
-        return redirect('proyecto_detalle', id=ot.id)
+        return redirect('proyecto_detalle', id_ot=ot.id)
 
     tipos_proyecto = TipOt.objects.all().order_by('nom_tipo')
     ots_list = Ot.objects.all().order_by('-id')
