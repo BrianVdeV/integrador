@@ -69,19 +69,7 @@ class Actividades(models.Model):
         """Calcula la diferencia entre inicio y fin en formato decimal,
         asegurando que el cálculo empieza a las 08:00 si inicio es antes de las 08:00"""
         if self.inicio and self.fin:
-            # Definir las 08:00 como la hora de inicio mínima
-            hora_limite = self.inicio.replace(
-                hour=8, minute=0, second=0, microsecond=0)
-            # Si inicio es antes de las 08:00, ajustamos inicio a las 08:00
-            if self.inicio < hora_limite:
-                # Modificamos inicio a las 08:00
-                inicio_ajustada = hora_limite
-            else:
-                # Si inicio es después de las 08:00, usamos inicio tal como está
-                inicio_ajustada = self.inicio
-
-            # Calcular la diferencia entre inicio ajustada y fin en segundos
-            diferencia = self.fin - inicio_ajustada
+            diferencia = self.fin - self.inicio
             horas_decimales = diferencia.total_seconds() / 3600
             return round(horas_decimales, 2)
         return None
