@@ -20,11 +20,9 @@ from openpyxl.styles import Font, Alignment, Border, Side, PatternFill
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import cm
-from reportlab.lib import colors
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
 from auth.models import Colaborador, Area
 from intranet.models import Expedientes, Ot
-from kanban.models import Actividades, Tarea
+from kanban.models import Actividades
 from kanban.forms import ActividadesForm
 
 
@@ -108,8 +106,6 @@ def export_actividades_excel(request):
         showRowStripes=True,
         showColumnStripes=False
     )
-    tabla = Table(ref=tabla_rango)
-    tabla.displayName = "TablaActividades"
     tabla.tableStyleInfo = estilo
     for row in range(1, ws.max_row + 1):  # Recorre todas las filas existentes
         ws.row_dimensions[row].height = 25

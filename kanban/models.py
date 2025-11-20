@@ -57,12 +57,6 @@ class Actividades(models.Model):
         """Total en horas y minutos, asegurando que el cálculo
         empieza a las 08:00 si inicio es antes de las 08:00"""
         if self.inicio and self.fin:
-            # Definir las 08:00 como la hora de inicio mínima
-            hora_limite = self.inicio.replace(
-                hour=8, minute=0, second=0, microsecond=0)
-            # Si inicio es antes de las 08:00, ajustamos inicio a las 08:00
-            if self.inicio < hora_limite:
-                self.inicio = hora_limite
 
             # Calcular la diferencia entre inicio y fin
             diferencia = self.fin - self.inicio

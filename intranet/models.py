@@ -57,6 +57,8 @@ class Expedientes(models.Model):
     presentacion = models.DateField(blank=True, null=True)
     reingreso = models.DateField(blank=True, null=True)
     vencimiento = models.DateField(blank=True, null=True)
+    creado = models.DateTimeField(auto_now_add=True)
+    editado = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         presentacion_year = self.presentacion.strftime(
