@@ -362,7 +362,7 @@ def export_resumen_excel(request):
     return response
 
 
-def draw_header(p, width, height, title_text):
+def draw_header(p, width, height, title_text, request):
     """
     Dibuja el logo y el título en la cabecera de una página del canvas.
     """
@@ -387,11 +387,18 @@ def draw_header(p, width, height, title_text):
         p.setFillColorRGB(0.8, 0.2, 0.2)  # Color rojo
         p.drawString(2*cm, height - 2*cm, "[Logo no econtrado]")
         p.setFillColorRGB(0, 0, 0)  # Resetear color
+    # --- Usuario y Fecha ---
+    p.setFont("Helvetica", 9)
+    user_text = f"Usuario: {request.user.username}"
+    date_text = f"Fecha: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}"
+
+    p.drawRightString(width - 2*cm, height - 2*cm, user_text)
+    p.drawRightString(width - 2*cm, height - 2.5*cm, date_text)
 
 # --- Funciones de Generación de PDF (Actualizadas) ---
 
 
-def generar_reporte_r1(response, data_r1):
+def generar_reporte_r1(response, data_r1, request):
     """
     Genera el PDF para el Reporte R1: Proyectos por Mes.
     """
@@ -399,7 +406,7 @@ def generar_reporte_r1(response, data_r1):
     width, height = A4  # Obtener dimensiones
 
     # --- MODIFICADO: Llamar a la cabecera ---
-    draw_header(p, width, height, "R1: Proyectos Registrados por Mes")
+    draw_header(p, width, height, "R1: Proyectos Registrados por Mes", request)
 
     # Cabeceras de la tabla
     p.setFont("Helvetica-Bold", 12)
@@ -415,7 +422,7 @@ def generar_reporte_r1(response, data_r1):
         if y_position < 4*cm:  # Salto de página
             p.showPage()
             # --- MODIFICADO: Dibujar cabecera en la nueva página ---
-            draw_header(p, width, height,
+            draw_header(p, width, height, request,
                         "R1: Proyectos Registrados por Mes (Cont.)")
             p.setFont("Helvetica", 11)
             y_position = height - 4*cm  # Reiniciar Y en la nueva página
@@ -432,7 +439,7 @@ def generar_reporte_r1(response, data_r1):
     return response
 
 
-def generar_reporte_r2(response, data_r2):
+def generar_reporte_r2(response, data_r2, request):
     """
     Genera el PDF para el Reporte R2: Seguimiento de Proyectos.
     """
@@ -440,7 +447,8 @@ def generar_reporte_r2(response, data_r2):
     width, height = A4
 
     # --- MODIFICADO: Llamar a la cabecera ---
-    draw_header(p, width, height, "R2: Seguimiento y Estado de Proyectos")
+    draw_header(p, width, height,
+                "R2: Seguimiento y Estado de Proyectos", request)
 
     y_position = height - 4*cm
 
@@ -456,7 +464,8 @@ def generar_reporte_r2(response, data_r2):
         if y_position < (espacio_necesario + 4*cm):  # 4cm = margen inferior
             p.showPage()
             # --- MODIFICADO: Dibujar cabecera en la nueva página ---
-            draw_header(p, width, height, "R2: Seguimiento (Continuación)")
+            draw_header(p, width, height,
+                        "R2: Seguimiento (Continuación)", request)
             p.setFont("Helvetica", 11)  # Resetear fuente
             y_position = height - 4*cm  # Reiniciar Y
 
@@ -538,7 +547,7 @@ class ReportePDFView(APIView):
             response = HttpResponse(content_type='application/pdf')
             response['Content-Disposition'] = 'attachment; filename="R1_proyectos_por_mes.pdf"'
 
-            return generar_reporte_r1(response, data_r1)
+            return generar_reporte_r1(response, data_r1, request)
 
         elif report_type == 'R2':
 
@@ -576,7 +585,7 @@ class ReportePDFView(APIView):
             response['Content-Disposition'] = f'attachment; filename="{filename}"'
 
             # 6. Generar el PDF (la función 'generar_reporte_r2' no cambia)
-            return generar_reporte_r2(response, proyectos)
+            return generar_reporte_r2(response, proyectos, request)
             # --- FIN DE LA LÓGICA MODIFICADA ---
 
         else:
