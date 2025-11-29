@@ -18,7 +18,7 @@
           </div>
         </form>
       </div>
-      <h4 class="page-title">{{title}}</h4>
+      <h4 class="page-title">Resumen</h4>
     </div>
   </div>
 </div>
@@ -26,6 +26,11 @@
 <div class="row">
   <div class="col-md-12">
     <div class="card">
+      <div class="row">
+        <div class="col">
+          <button id="btnImprimir" class="btn btn-danger">🖨️ Imprimir Página</button>
+        </div>
+      </div>
       <div class="card-body">
         <table class="table table-sm table-hover w-100" id="table">
           <thead>
@@ -301,6 +306,23 @@
             console.error("Error al obtener datos del gráfico:", error);
         }
     });
+  }
+</script>
+<script>
+  /**
+   * Función que invoca la caja de diálogo de impresión del navegador.
+   * Al hacer esto, el navegador automáticamente aplica estilos de impresión (media print).
+   */
+  function imprimirPagina() {
+    window.print();
+  }
+
+  // Obtener el botón por su ID
+  const botonImprimir = document.getElementById("btnImprimir");
+
+  // Asignar el evento click al botón
+  if (botonImprimir) {
+    botonImprimir.addEventListener("click", imprimirPagina);
   }
 </script>
 {% endblock %}

@@ -101,7 +101,7 @@
                      value="{% if tracker %}{{ tracker.comentario }}{% endif %}"
                      placeholder="{% if not tracker %}¿En que estas trabajando?{% endif %}" 
                      required />
-              <div class="invalid-feedback">Debe tener entre 25 y 500 caracteres.</div>
+              <div class="invalid-feedback">Debe tener entre 5 y 500 caracteres.</div>
             </div>
             
             <div class="col-md-2">
@@ -169,7 +169,7 @@
   function guardarComentario(id, comentario) {
     let $status = $("#saveStatus");
     // Validación básica
-    if (comentario.length < 25 || comentario.length > 500) {
+    if (comentario.length < 5 || comentario.length > 500) {
       $("#txaComentario").removeClass("is-valid").addClass("is-invalid");
       $status.html('<i class="mdi mdi-alert-circle-outline text-danger"></i> Comentario no válido.');
       return; // No guardar si no es válido
@@ -480,7 +480,7 @@
   $(document).on("input", "#txtActividades, #txaComentario", function () {
     let input = $(this);
     let valor = input.val().trim();
-    if (valor.length >= 25 && valor.length <= 500) {
+    if (valor.length >= 5 && valor.length <= 500) {
       input.removeClass("is-invalid").addClass("is-valid");
     } else {
       input.removeClass("is-valid").addClass("is-invalid");
@@ -504,7 +504,7 @@
     let valor = input.val().trim();
     let submitButton = $("#btnIniciar");
 
-    if (valor.length < 25 || valor.length > 500) {
+    if (valor.length < 5 || valor.length > 500) {
       input.addClass("is-invalid");
       return;
     }
@@ -762,7 +762,7 @@
     text: `<h5 class="mb-2">📝 Anotaciones y Descripción</h5>
            <p>Usted pondrá una <strong>descripción de la actividad que realizará</strong> que sea entendible.</p>
            <p>Al acabar con esta actividad, lo podrá modificar en caso de que requiera que sea más detallada.</p>
-           <p class="text-info mb-0"><strong>💡 Debe tener entre 25 y 500 caracteres.</strong></p>`,
+           <p class="text-info mb-0"><strong>💡 Debe tener entre 5 y 500 caracteres.</strong></p>`,
     attachTo: {
       element: '#txtActividades',
       on: 'bottom'

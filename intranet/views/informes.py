@@ -518,6 +518,57 @@ def generar_reporte_r2(response, data_r2, request):
     return response
 
 
+def generar_reporte_r3(response, data_r3, request):
+    """
+    Genera el PDF para el Reporte R3: Expedientes por Vencer.
+    """
+    p = canvas.Canvas(response, pagesize=A4)
+    width, height = A4
+
+    draw_header(p, width, height, "R3: Expedientes Próximos a Vencer", request)
+
+    # Cabeceras de la tabla
+    p.setFont("Helvetica-Bold", 11)
+    y_position = height - 4*cm
+    p.drawString(2*cm, y_position, "OT")
+    p.drawString(5*cm, y_position, "Entidad")
+    p.drawString(8*cm, y_position, "Número")
+    p.drawString(12*cm, y_position, "Estado")
+    p.drawString(16*cm, y_position, "Vencimiento")
+    p.line(2*cm, y_position - 0.2*cm, width - 2*cm, y_position - 0.2*cm)
+
+    # Datos
+    p.setFont("Helvetica", 10)
+    y_position -= 1*cm
+
+    for item in data_r3:
+        if y_position < 4*cm:  # Salto de página
+            p.showPage()
+            draw_header(p, width, height,
+                        "R3: Expedientes Próximos a Vencer (Cont.)", request)
+            p.setFont("Helvetica-Bold", 11)
+            y_position = height - 4*cm
+            # Redibujar cabeceras en nueva página
+            p.drawString(2*cm, y_position, "OT")
+            p.drawString(5*cm, y_position, "Entidad")
+            p.drawString(8*cm, y_position, "Número")
+            p.drawString(12*cm, y_position, "Estado")
+            p.drawString(16*cm, y_position, "Vencimiento")
+            p.setFont("Helvetica", 10)
+            y_position -= 1*cm
+
+        p.drawString(2*cm, y_position, str(item.ot.id) if item.ot else "N/A")
+        p.drawString(5*cm, y_position, item.entidad or "")
+        p.drawString(8*cm, y_position, item.numero or "")
+        p.drawString(12*cm, y_position, item.estado or "")
+        p.drawString(16*cm, y_position, item.vencimiento.strftime('%d/%m/%Y'))
+        y_position -= 0.8*cm
+
+    p.showPage()
+    p.save()
+    return response
+
+
 # --- La APIView (Sin cambios) ---
 
 class ReportePDFView(APIView):
@@ -527,6 +578,7 @@ class ReportePDFView(APIView):
     Uso:
     GET /api/reportes-pdf/?report_type=R1
     GET /api/reportes-pdf/?report_type=R2
+    GET /api/reportes-pdf/?report_type=R3
     GET /api/reportes-pdf/?report_type=R2&ot=123  <-- NUEVO
     """
     # permission_classes = [IsAuthenticated]
@@ -587,6 +639,24 @@ class ReportePDFView(APIView):
             # 6. Generar el PDF (la función 'generar_reporte_r2' no cambia)
             return generar_reporte_r2(response, proyectos, request)
             # --- FIN DE LA LÓGICA MODIFICADA ---
+
+        elif report_type == 'R3':
+            # --- LÓGICA PARA REPORTE R3 ---
+            today = datetime.now().date()
+            seven_days_later = today + timedelta(days=7)
+
+            # 1. Filtrar expedientes que vencen en los próximos 7 días
+            data_r3 = Expedientes.objects.filter(
+                vencimiento__range=[today, seven_days_later]
+            ).select_related('ot').order_by('vencimiento')
+
+            # 2. Preparar la respuesta HTTP
+            response = HttpResponse(content_type='application/pdf')
+            response['Content-Disposition'] = 'attachment; filename="R3_expedientes_por_vencer.pdf"'
+
+            # 3. Generar el PDF
+            return generar_reporte_r3(response, data_r3, request)
+            # --- FIN DE LA LÓGICA R3 ---
 
         else:
             return Response(
