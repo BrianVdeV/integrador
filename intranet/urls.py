@@ -31,7 +31,6 @@ urlpatterns = [
          name='exportar_actividades_excel'),
     path('exportar_resumen_excel/', views.export_resumen_excel,
          name='exportar_resumen_excel'),
-    path('dashboard/proyectos', views.dashboard, name='dashboard_proyectos'),
     path('detallado/', views.detallado, name='detallado'),
     path('proyectos/', views.proyectos, name='proyectos'),
     path('proyectos/edit/<int:id_ot>/',

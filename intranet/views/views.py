@@ -127,46 +127,6 @@ def calendario(request):
     return render(request, 'calendario.html', context)
 
 
-def dashboard(request):
-    """Template Dashboard"""
-    ots_today = Actividades.objects.filter(
-        inicio__date=date.today()
-    )
-    total_tasks = ots_today.values('ot').distinct().count()
-    total_seconds = 0
-    total_horas_diarias = defaultdict(float)
-    for actividad in ots_today:
-        if actividad.inicio:
-            if actividad.fin:
-                diferencia_horas = actividad.fin - actividad.inicio
-            else:
-                diferencia_horas = timezone.now() - actividad.inicio
-
-            # Calcular la diferencia en segundos
-            segundos_totales = diferencia_horas.total_seconds()
-            total_seconds += segundos_totales
-            total_horas_diarias[actividad.inicio.date(
-            )] += segundos_totales / 3600  # Convertir a horas
-
-    total_hours = total_seconds // 3600
-    total_minutes = (total_seconds % 3600) // 60
-    total_productivity_hours = f"{int(total_hours)}:{int(total_minutes)}"
-    total_projects = Ot.objects.filter(estado="activo").count()
-    total_members = User.objects.filter(is_active=True).count()
-    labels = list(total_horas_diarias.keys())  # Fechas
-    chart = list(total_horas_diarias.values())  # Horas trabajadas por día
-    context = {
-        'total_projects': total_projects,
-        'total_tasks': total_tasks,
-        'total_members': total_members,
-        'total_productivity': total_productivity_hours,
-        'total_horas_diarias': total_horas_diarias,
-        'labels': labels,
-        'chart': chart
-    }
-    return render(request, 'dashboard.html', context)
-
-
 @login_required
 def proyectos(request):
     """ Proyectos """
