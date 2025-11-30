@@ -164,14 +164,14 @@ def export_resumen_excel(request):
 
     actividades = Actividades.objects.all().order_by('-id')
     user = User.objects.filter(username__icontains=search_value).first()
-    colaborador = Colaborador.objects.filter(id_user=user).first()
+    colaborador = Colaborador.objects.filter(user=user).first()
     if colaborador:
         actividades = actividades.filter(user=user.id)
     else:
         return JsonResponse({'error': 'Colaborador no válido.'}, status=400)
     # Obtener el área del colaborador
     if colaborador:  # Verifica si tiene un área asignada
-        area = Area.objects.filter(id=colaborador.id_are.id).first()
+        area = Area.objects.filter(id=colaborador.area.id).first()
         # Si no se encuentra el área, poner "GENERAL"
         nombre = area.nombre.upper() if area else 'GENERAL'
     else:

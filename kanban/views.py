@@ -122,7 +122,7 @@ class TareaViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(
                 Q(titulo__icontains=search_value) |
                 Q(descripcion__icontains=search_value) |
-                Q(ot__id_ot__icontains=search_value) |
+                Q(ot__id__icontains=search_value) |
                 Q(user__username__icontains=search_value)
             )
 
@@ -166,7 +166,7 @@ class TareaViewSet(viewsets.ModelViewSet):
         # Debe coincidir con el orden en 'columns' de JavaScript
         column_field_map = [
             'estado',           # 0
-            'ot__id_ot',        # 1 (Ordenamos por el ID de la OT)
+            'ot__id',        # 1 (Ordenamos por el ID de la OT)
             'titulo',           # 2
             'vencimiento',      # 3
             'duracion',         # 4
@@ -319,7 +319,7 @@ def add_tarea(request):
         duracion = None  # Inicializar duracion
 
         if ot_id:
-            ot_instance = Ot.objects.filter(id_ot=ot_id).first()
+            ot_instance = Ot.objects.filter(id=ot_id).first()
 
         if user_id:
             user_instance = User.objects.filter(id=user_id).first()
@@ -464,7 +464,7 @@ class InformesViewSet(viewsets.ReadOnlyModelViewSet):
         if search_value:
             queryset = queryset.filter(
                 Q(descripcion__icontains=search_value) |
-                Q(ot__id_ot__icontains=search_value) |
+                Q(ot__id__icontains=search_value) |
                 Q(ot__nombre__icontains=search_value) |
                 Q(tarea__titulo__icontains=search_value) |
                 Q(user__username__icontains=search_value))

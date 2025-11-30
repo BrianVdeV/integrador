@@ -99,6 +99,29 @@
   const csrfToken = document.querySelector("[name=csrfmiddlewaretoken]").value;
 
   $(document).ready(function () {
+    $('#offcanvas input[name="titulo"]').on("change", function () {
+        actualizarTarea({ titulo: $(this).val() });
+      });
+      $('#offcanvas textarea[name="descripcion"]').on("change", function () {
+        actualizarTarea({ descripcion: $(this).val() });
+      });
+
+      // Usuario
+      $('#offcanvas select[name="user"]').on("change", function () {
+        actualizarTarea({ user: $(this).val() });
+      });
+
+      // Vencimiento
+      $('#offcanvas input[name="vencimiento"]').on("change", function () {
+        actualizarTarea({ vencimiento: $(this).val() });
+      });
+      // Prioridad
+      $('#offcanvas select[name="prioridad"]').on("change", function () {
+        actualizarTarea({ prioridad: $(this).val() });
+      });
+      $('#offcanvas input[name="duracion"]').on("change", function () {
+        actualizarTarea({ duracion_input: $(this).val() });
+      });
     // Inicializar calendario
     flatpickr("#vencimiento-filter", {
       mode: "range",
@@ -204,6 +227,24 @@
         $('#offcanvas input[name="duracion"]').val(data.duracion);
       });
     });
+    function actualizarTarea(data) {
+    $.ajax({
+      url: `../api/tarea/${currentTaskId}/`,
+      type: "PATCH",
+      contentType: "application/json",
+      headers: {
+        "X-CSRFToken": "{{ csrf_token }}",
+      },
+      data: JSON.stringify(data),
+      success: function () {
+        table.ajax.reload(null, false);
+        $.NotificationApp.send("¡Bien Hecho!", "Tarea actualizada con exito", "bottom-right", "rgba(0,0,0,0.2)", "success");
+      },
+      error: function (xhr) {
+        $.NotificationApp.send("¡Error!", xhr.statusText, "bottom-right", "rgba(0,0,0,0.2)", "error");
+      },
+    });
+  }
 
     // Cambiar estado
     $("#table").on("click", "#drpEdit .dropdown-item", function (e) {
@@ -242,5 +283,6 @@
       }
     });
   });
+  
 </script>
 {% endblock %}
