@@ -509,7 +509,7 @@
 
                   $.each(response.results, function (i, ot) {
                     $dropdown.append(`
-                                <a href="{% url "proyectos" %}${ot.id_ot}" class="dropdown-item notify-item text-truncate">
+                                <a href="{% url "proyectos" %}${ot.id}" class="dropdown-item notify-item text-truncate">
                                     <i class="uil-file-alt font-16 me-1"></i>
                                     <span>${ot.id_ot_str}</span>
                                 </a>
